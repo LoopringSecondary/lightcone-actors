@@ -34,6 +34,7 @@ object Dependencies {
     "io.spray" %% "spray-json" % "1.3.4",
 
     "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE",
+    "org.loopring" %% "lightcone-core" % "0.1.0-SNAPSHOT",
 
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
