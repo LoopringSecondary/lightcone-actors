@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone
 
 import com.google.protobuf.ByteString
-
 import org.loopring.lightcone.core.{
   Order ⇒ COrder,
   OrderState ⇒ COrderState,
   OrderStatus ⇒ COrderStatus
 }
 
-package object data {
+package object actors {
   implicit class RichOrderStatus(status: OrderStatus) {
     def toPojo(): COrderStatus.Value = status match {
       case OrderStatus.NEW ⇒ COrderStatus.NEW
