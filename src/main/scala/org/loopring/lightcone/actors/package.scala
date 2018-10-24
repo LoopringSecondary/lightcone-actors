@@ -55,6 +55,7 @@ package object actors {
       case OrderStatus.PENDING ⇒ COrderStatus.PENDING
       case OrderStatus.EXPIRED ⇒ COrderStatus.EXPIRED
       case OrderStatus.CANCELLED_BY_USER ⇒ COrderStatus.CANCELLED_BY_USER
+      case OrderStatus.COMPLETELY_FILLED ⇒ COrderStatus.COMPLETELY_FILLED
       case OrderStatus.CANCELLED_LOW_BALANCE ⇒ COrderStatus.CANCELLED_LOW_BALANCE
       case OrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ COrderStatus.CANCELLED_LOW_FEE_BALANCE
       case OrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ COrderStatus.CANCELLED_TOO_MANY_ORDERS
@@ -68,6 +69,7 @@ package object actors {
       case COrderStatus.NEW ⇒ OrderStatus.NEW
       case COrderStatus.PENDING ⇒ OrderStatus.PENDING
       case COrderStatus.EXPIRED ⇒ OrderStatus.EXPIRED
+      case COrderStatus.COMPLETELY_FILLED ⇒ OrderStatus.COMPLETELY_FILLED
       case COrderStatus.CANCELLED_BY_USER ⇒ OrderStatus.CANCELLED_BY_USER
       case COrderStatus.CANCELLED_LOW_BALANCE ⇒ OrderStatus.CANCELLED_LOW_BALANCE
       case COrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ OrderStatus.CANCELLED_LOW_FEE_BALANCE
