@@ -66,6 +66,20 @@ message Ring {
 }
 
 ///////////////////
+message BalanceAndAllowance {
+  bytes balance = 2;
+  bytes allowance = 3;
+}
+
+message GetBalanceAndAllowancesReq {
+  string address = 1;
+  repeated string tokens = 2;
+}
+
+message GetBalanceAndAllowancesResp {
+  string address = 1;
+  map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+}
 
 message GetFilledAmountReq {
   repeated string order_ids = 1;
@@ -75,4 +89,12 @@ message GetFilledAmountResp {
 }
 message UpdateFilledAmountReq {
   map<string, bytes> filled_amount_s_map = 1;
+}
+
+message SubmitOrderReq {
+  Order order = 1;
+}
+
+message SubmitOrderResp {
+  Order order = 1;
 }

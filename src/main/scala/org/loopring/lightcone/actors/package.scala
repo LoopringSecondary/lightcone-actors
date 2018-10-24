@@ -26,12 +26,28 @@ import org.loopring.lightcone.core.{
 }
 
 package object actors {
+  type Amount = BigInt
+  type Address = String
+  type ID = String
+  type RingID = Array[Byte]
 
   implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
   implicit def byteString2ByteArray(bs: ByteString) = bs.toByteArray
 
   implicit def byteString2BigInt(bs: ByteString): BigInt = BigInt(bs.toByteArray)
   implicit def bigIntToByteString(bi: BigInt): ByteString = bi.toByteArray
+
+  implicit def mapOfStringToBigInt2mapOfStringToByteString(
+    m: Map[String, BigInt]
+  ): Map[String, ByteString] = m.map {
+    case (k, v) ⇒ k -> bigIntToByteString(v)
+  }
+
+  implicit def mapOfStringToByteString2MapOfStringToBigInt(
+    m: Map[String, ByteString]
+  ): Map[String, BigInt] = m.map {
+    case (k, v) ⇒ k -> byteString2BigInt(v)
+  }
 
   implicit class RichOrderStatus(status: OrderStatus) {
     def toPojo(): COrderStatus.Value = status match {
