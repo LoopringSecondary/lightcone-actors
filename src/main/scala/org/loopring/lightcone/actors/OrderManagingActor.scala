@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-syntax = "proto3";
+package org.loopring.lightcone.actors
 
-option java_multiple_files = true;
-option java_package = "org.loopring.lightcone.proto";
-package org.loopring.lightcone.proto;
+import org.loopring.lightcone.core._
+import akka.actor._
+import akka.event.Logging
+import akka.pattern.ask
 
-///////////////////////////////////////////
-//
-// ethereum original type
-//
-///////////////////////////////////////////
+class OrderManagingActor(manager: OrderManager)
+  extends Actor with ActorLogging {
 
-message Block {
-    int64 id = 1;
-    string block_hash = 2;
-    int64 block_number = 3;
-    string parent_hash = 4;
-    bool fork = 5;
-    int64 created_at = 6;
-    int64 updated_at = 7;
+  def receive() = {
+    case _ ⇒
+  }
 }
