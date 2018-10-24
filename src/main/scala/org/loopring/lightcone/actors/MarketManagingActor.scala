@@ -17,12 +17,22 @@
 package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core._
+import com.google.protobuf.ByteString
 import akka.actor._
 import akka.event.{ Logging, LoggingReceive }
 import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.{ ExecutionContext, Future }
 
-class MarketManagingActor(manager: MarketManager)
-  extends Actor with ActorLogging {
+class MarketManagingActor(
+    manager: MarketManager
+)(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
+  extends Actor
+  with ActorLogging {
 
   def receive() = LoggingReceive {
     case _ ⇒ log.info("")

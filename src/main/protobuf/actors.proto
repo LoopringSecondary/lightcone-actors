@@ -21,9 +21,9 @@ option java_package = "org.loopring.lightcone";
 package org.loopring.lightcone;
 
 message OrderState {
-    bytes amount_s = 1;
-    bytes amount_b = 2;
-    bytes amount_fee = 3;
+  bytes amount_s = 1;
+  bytes amount_b = 2;
+  bytes amount_fee = 3;
 }
 
 enum OrderStatus {
@@ -38,18 +38,70 @@ enum OrderStatus {
 }
 
 message Order {
-    string id = 1;
-    string token_s = 2;
-    string token_b = 3;
-    string token_fee = 4;
-    bytes amount_s = 5;
-    bytes amount_b = 6;
-    bytes amount_fee = 7;
-    int64 created_at = 8;
-    OrderStatus status = 9;
-    double wallet_split_percentage = 10;
-    OrderState outstanding = 11;
-    OrderState reserved = 12;
-    OrderState actual = 13;
-    OrderState matchable = 14;
+  string id = 1;
+  string token_s = 2;
+  string token_b = 3;
+  string token_fee = 4;
+  bytes amount_s = 5;
+  bytes amount_b = 6;
+  bytes amount_fee = 7;
+  int64 created_at = 8;
+  OrderStatus status = 9;
+  double wallet_split_percentage = 10;
+  OrderState outstanding = 11;
+  OrderState reserved = 12;
+  OrderState actual = 13;
+  OrderState matchable = 14;
+}
+
+message ExpectedFill {
+  Order order = 1;
+  OrderState pending = 2;
+  bytes amount_margin = 3;
+}
+
+message Ring {
+  ExpectedFill maker = 1;
+  ExpectedFill taker = 2;
+}
+
+///////////////////
+
+enum ErrorCode {
+  OK = 0;
+  ORDER_INVALID_AMOUNT_S = 1;
+}
+
+message BalanceAndAllowance {
+  bytes balance = 2;
+  bytes allowance = 3;
+}
+
+message GetBalanceAndAllowancesReq {
+  string address = 1;
+  repeated string tokens = 2;
+}
+
+message GetBalanceAndAllowancesResp {
+  string address = 1;
+  map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
+}
+
+message GetFilledAmountReq {
+  repeated string order_ids = 1;
+}
+message GetFilledAmountResp {
+  map<string, bytes> filled_amount_s_map = 1;
+}
+message UpdateFilledAmountReq {
+  map<string, bytes> filled_amount_s_map = 1;
+}
+
+message SubmitOrderReq {
+  Order order = 1;
+}
+
+message SubmitOrderResp {
+  ErrorCode error = 1;
+  Order order = 2;
 }

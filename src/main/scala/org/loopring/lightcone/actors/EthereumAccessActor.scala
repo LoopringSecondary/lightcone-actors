@@ -24,9 +24,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.{ ExecutionContext, Future }
 
-class OrderManagingActor(
-    owner: Address
-)(
+class EthereumAccessActor()(
     implicit
     ec: ExecutionContext,
     timeout: Timeout
@@ -34,30 +32,15 @@ class OrderManagingActor(
   extends Actor
   with ActorLogging {
 
-  val ethereumAccessActor: ActorRef = ???
-
-  implicit val orderPool = new OrderPool()
-  val manager: OrderManager = OrderManager.default(10000)
-
   def receive() = LoggingReceive {
-    case SubmitOrderReq(orderOpt) ⇒
-      assert(orderOpt.nonEmpty)
-      val order = orderOpt.get.toPojo
-      assert(order.outstanding.amountS > 0)
+    case GetBalanceAndAllowancesReq(address, tokens) ⇒
+      val map_ = tokens.map { token ⇒
+        // TODO: query Etherem and get the results.
+        val balance: BigInt = 0;
+        val allowance: BigInt = 0;
+        token -> BalanceAndAllowance(balance, allowance)
+      }.toMap
 
-      // Set(order.tokenS, order.tokenFee).map {
-      //   token ⇒
-
-      //     for {
-      //       resp ← (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, token)).mapTo[GetBalanceAndAllowancesResp]
-      //     }
-
-      //     if (!manager.hasTokenManager(token)) {
-      //       val tokenManager: TokenManager = ???
-      //       tokenManager.init(123, 345)
-      //       manager.addTokenManager(tokenManager)
-      //     }
-      // }
-      manager.submitOrder(order)
+      sender ! GetBalanceAndAllowancesResp(address, map_)
   }
 }

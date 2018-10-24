@@ -20,10 +20,35 @@ import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.{
   Order ⇒ COrder,
   OrderState ⇒ COrderState,
-  OrderStatus ⇒ COrderStatus
+  OrderStatus ⇒ COrderStatus,
+  ExpectedFill ⇒ CExpectedFill,
+  Ring ⇒ CRing
 }
 
 package object actors {
+  type Amount = BigInt
+  type Address = String
+  type ID = String
+  type RingID = Array[Byte]
+
+  implicit def byteArray2ByteString(bytes: Array[Byte]) = ByteString.copyFrom(bytes)
+  implicit def byteString2ByteArray(bs: ByteString) = bs.toByteArray
+
+  implicit def byteString2BigInt(bs: ByteString): BigInt = BigInt(bs.toByteArray)
+  implicit def bigIntToByteString(bi: BigInt): ByteString = bi.toByteArray
+
+  implicit def mapOfStringToBigInt2mapOfStringToByteString(
+    m: Map[String, BigInt]
+  ): Map[String, ByteString] = m.map {
+    case (k, v) ⇒ k -> bigIntToByteString(v)
+  }
+
+  implicit def mapOfStringToByteString2MapOfStringToBigInt(
+    m: Map[String, ByteString]
+  ): Map[String, BigInt] = m.map {
+    case (k, v) ⇒ k -> byteString2BigInt(v)
+  }
+
   implicit class RichOrderStatus(status: OrderStatus) {
     def toPojo(): COrderStatus.Value = status match {
       case OrderStatus.NEW ⇒ COrderStatus.NEW
@@ -54,17 +79,17 @@ package object actors {
 
   implicit class RichOrderState(state: OrderState) {
     def toPojo(): COrderState = COrderState(
-      BigInt(state.amountS.toByteArray),
-      BigInt(state.amountB.toByteArray),
-      BigInt(state.amountFee.toByteArray)
+      state.amountS,
+      state.amountB,
+      state.amountFee
     )
   }
 
   implicit class RichCOrderState(state: COrderState) {
     def toProto(): OrderState = OrderState(
-      ByteString.copyFrom(state.amountS.toByteArray),
-      ByteString.copyFrom(state.amountB.toByteArray),
-      ByteString.copyFrom(state.amountFee.toByteArray)
+      state.amountS,
+      state.amountB,
+      state.amountFee
     )
   }
 
@@ -74,9 +99,9 @@ package object actors {
       order.tokenS,
       order.tokenB,
       order.tokenFee,
-      BigInt(order.amountS.toByteArray),
-      BigInt(order.amountB.toByteArray),
-      BigInt(order.amountFee.toByteArray),
+      order.amountS,
+      order.amountB,
+      order.amountFee,
       order.createdAt,
       order.status.toPojo,
       order.walletSplitPercentage,
@@ -93,9 +118,9 @@ package object actors {
       order.tokenS,
       order.tokenB,
       order.tokenFee,
-      ByteString.copyFrom(order.amountS.toByteArray),
-      ByteString.copyFrom(order.amountB.toByteArray),
-      ByteString.copyFrom(order.amountFee.toByteArray),
+      order.amountS,
+      order.amountB,
+      order.amountFee,
       order.createdAt,
       order.status.toProto,
       order.walletSplitPercentage,
@@ -104,6 +129,21 @@ package object actors {
       order._actual.map(_.toProto),
       order._matchable.map(_.toProto)
     )
+  }
 
+  implicit class RichExpectedFill(ef: ExpectedFill) {
+    def toPojo(): CExpectedFill = CExpectedFill(
+      ef.order.map(_.toPojo).getOrElse(null),
+      ef.pending.map(_.toPojo).getOrElse(null),
+      ef.amountMargin
+    )
+  }
+
+  implicit class RichCExpectedFill(ef: CExpectedFill) {
+    def toProto(): ExpectedFill = ExpectedFill(
+      Some(ef.order.toProto),
+      Some(ef.pending.toProto),
+      ef.amountMargin
+    )
   }
 }
