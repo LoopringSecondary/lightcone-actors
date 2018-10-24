@@ -18,13 +18,13 @@ package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core._
 import akka.actor._
-import akka.event.Logging
+import akka.event.{ Logging, LoggingReceive }
 import akka.pattern.ask
 
 class MarketManagingActor(manager: MarketManager)
   extends Actor with ActorLogging {
 
-  def receive() = {
-    case _ ⇒
+  def receive() = LoggingReceive {
+    case _ ⇒ log.info("")
   }
 }
