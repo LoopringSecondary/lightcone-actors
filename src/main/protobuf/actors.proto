@@ -22,7 +22,7 @@ package org.loopring.lightcone;
 
 message OrderState {
   bytes amount_s = 1;
-bytes amount_b = 2;
+  bytes amount_b = 2;
   bytes amount_fee = 3;
 }
 
