@@ -66,6 +66,13 @@ message Ring {
 }
 
 ///////////////////
+
+enum ErrorCode {
+  OK = 0;
+  ORDER_INVALID_AMOUNT_S = 1;
+}
+
+
 message BalanceAndAllowance {
   bytes balance = 2;
   bytes allowance = 3;
@@ -96,5 +103,6 @@ message SubmitOrderReq {
 }
 
 message SubmitOrderResp {
-  Order order = 1;
+  ErrorCode error = 1;
+  Order order = 2;
 }

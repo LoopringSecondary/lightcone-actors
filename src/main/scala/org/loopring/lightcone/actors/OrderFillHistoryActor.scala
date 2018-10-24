@@ -25,15 +25,22 @@ import akka.util.Timeout
 import scala.concurrent.{ ExecutionContext, Future }
 
 class OrderFillHistoryActor()(
-  implicit ec: ExecutionContext, timeout: Timeout)
-  extends Actor with ActorLogging {
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
+  extends Actor
+  with ActorLogging {
 
   val orderManagignActor: ActorRef = ???
   val ethereumAccessActor: ActorRef = ???
 
   def receive() = LoggingReceive {
-    case req: GetFilledAmountReq ⇒ ethereumAccessActor forward req
+    case req: GetFilledAmountReq    ⇒ ethereumAccessActor forward req
     case req: UpdateFilledAmountReq ⇒ ethereumAccessActor forward req
+
+    case SubmitOrderReq(orderOpt) if orderOpt.isEmpty ⇒
+      log.error(s"SubmitOrderReq order with empty order")
 
     case SubmitOrderReq(orderOpt) if orderOpt.nonEmpty ⇒
       val order = orderOpt.get.toPojo
@@ -43,11 +50,16 @@ class OrderFillHistoryActor()(
         filledAmountS: BigInt = filledAmountSMap(order.id)
         updated = if (filledAmountS == 0) order else {
           val outstanding = order.outstanding.scaleBy(
-            Rational(order.amountS - filledAmountS, order.amountS))
+            Rational(order.amountS - filledAmountS, order.amountS)
+          )
           order.copy(_outstanding = Some(outstanding))
         }
       } yield {
-        orderManagignActor forward SubmitOrderReq(Some(updated.toProto))
+        if (updated.outstanding.amountS <= 0) {
+          sender ! SubmitOrderResp(ErrorCode.ORDER_INVALID_AMOUNT_S, None)
+        } else {
+          orderManagignActor forward SubmitOrderReq(Some(updated.toProto))
+        }
       }
   }
 

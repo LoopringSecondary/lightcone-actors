@@ -21,9 +21,16 @@ import com.google.protobuf.ByteString
 import akka.actor._
 import akka.event.{ Logging, LoggingReceive }
 import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.{ ExecutionContext, Future }
 
-class EthereumAccessActor()
-  extends Actor with ActorLogging {
+class EthereumAccessActor()(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
+  extends Actor
+  with ActorLogging {
 
   def receive() = LoggingReceive {
     case GetBalanceAndAllowancesReq(address, tokens) ⇒

@@ -17,14 +17,47 @@
 package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core._
+import com.google.protobuf.ByteString
 import akka.actor._
 import akka.event.{ Logging, LoggingReceive }
 import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.{ ExecutionContext, Future }
 
-class OrderManagingActor(manager: OrderManager)
-  extends Actor with ActorLogging {
+class OrderManagingActor(
+    owner: Address
+)(
+    implicit
+    ec: ExecutionContext,
+    timeout: Timeout
+)
+  extends Actor
+  with ActorLogging {
+
+  val ethereumAccessActor: ActorRef = ???
+
+  implicit val orderPool = new OrderPool()
+  val manager: OrderManager = OrderManager.default(10000)
 
   def receive() = LoggingReceive {
-    case _ ⇒
+    case SubmitOrderReq(orderOpt) ⇒
+      assert(orderOpt.nonEmpty)
+      val order = orderOpt.get.toPojo
+      assert(order.outstanding.amountS > 0)
+
+      // Set(order.tokenS, order.tokenFee).map {
+      //   token ⇒
+
+      //     for {
+      //       resp ← (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, token)).mapTo[GetBalanceAndAllowancesResp]
+      //     }
+
+      //     if (!manager.hasTokenManager(token)) {
+      //       val tokenManager: TokenManager = ???
+      //       tokenManager.init(123, 345)
+      //       manager.addTokenManager(tokenManager)
+      //     }
+      // }
+      manager.submitOrder(order)
   }
 }
