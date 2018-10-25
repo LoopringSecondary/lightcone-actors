@@ -46,7 +46,7 @@ class OrderFillHistoryActor()(
       val order = orderOpt.get.toPojo
 
       for {
-        filledAmountSMap ← getFilledAmount(Seq(order.id))
+        filledAmountSMap ← getFilledAmountAsFuture(Seq(order.id))
         filledAmountS: BigInt = filledAmountSMap(order.id)
         updated = if (filledAmountS == 0) order else {
           val outstanding = order.outstanding.scaleBy(
@@ -63,7 +63,7 @@ class OrderFillHistoryActor()(
       }
   }
 
-  def getFilledAmount(orderIds: Seq[String]): Future[Map[String, BigInt]] = {
+  def getFilledAmountAsFuture(orderIds: Seq[String]): Future[Map[String, BigInt]] = {
     (ethereumAccessActor ? GetFilledAmountReq(orderIds))
       .mapTo[GetFilledAmountResp]
       .map(_.filledAmountSMap)
