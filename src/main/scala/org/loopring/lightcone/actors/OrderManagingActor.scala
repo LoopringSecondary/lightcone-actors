@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core._
+import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import com.google.protobuf.ByteString
 import akka.actor._
 import akka.event.{ Logging, LoggingReceive }
@@ -29,14 +29,19 @@ class OrderManagingActor(
 )(
     implicit
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    dustOrderEvaluator: DustOrderEvaluator
 )
   extends Actor
   with ActorLogging {
 
   val ethereumAccessActor: ActorRef = ???
+  val marketManagingActor: ActorRef = ???
 
   implicit val orderPool = new OrderPool()
+  val updatdOrderReceiver = new UpdatedOrderReceiver()
+  orderPool.addCallback(updatdOrderReceiver.onUpdatedOrder)
+
   val manager: OrderManager = OrderManager.default(10000)
 
   def receive() = LoggingReceive {
@@ -45,19 +50,39 @@ class OrderManagingActor(
       val order = orderOpt.get.toPojo
       assert(order.outstanding.amountS > 0)
 
-      // Set(order.tokenS, order.tokenFee).map {
-      //   token ⇒
-
-      //     for {
-      //       resp ← (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, token)).mapTo[GetBalanceAndAllowancesResp]
-      //     }
-
-      //     if (!manager.hasTokenManager(token)) {
-      //       val tokenManager: TokenManager = ???
-      //       tokenManager.init(123, 345)
-      //       manager.addTokenManager(tokenManager)
-      //     }
-      // }
-      manager.submitOrder(order)
+      for {
+        _ ← Future.sequence(Seq( // run in parallel
+          getTokenManagerAsFuture(order.tokenS),
+          getTokenManagerAsFuture(order.tokenFee)
+        ))
+        success = manager.submitOrder(order)
+        updatedOrders = if (success) updatdOrderReceiver.getOrders else Seq.empty
+      } yield {
+        updatedOrders.foreach { order ⇒
+          marketManagingActor ! SubmitOrderReq(Some(order.toProto))
+        }
+      }
   }
+
+  private def getTokenManagerAsFuture(token: Address): Future[TokenManager] = {
+    if (manager.hasTokenManager(token)) {
+      Future.successful(manager.getTokenManager(token))
+    } else {
+
+      val tm = manager.addTokenManager(new TokenManager(token, 10000))
+
+      (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, Seq(token)))
+        .mapTo[GetBalanceAndAllowancesResp].map(_.balanceAndAllowanceMap(token)).map {
+          ba ⇒
+            tm.init(ba.balance, ba.allowance)
+            tm
+        }
+    }
+  }
+}
+
+class UpdatedOrderReceiver {
+  def onUpdatedOrder(order: COrder): Unit = {}
+
+  def getOrders(): Seq[COrder] = ???
 }
