@@ -135,3 +135,7 @@ message UpdateBalanceAndAllowanceReq {
 message UpdateBalanceAndAllowanceRes {
   ErrorCode error = 1;
 }
+
+message UpdatedGasPrice {
+  int64 gas_price = 1;
+}
