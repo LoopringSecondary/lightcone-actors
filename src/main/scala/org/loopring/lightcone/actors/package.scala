@@ -24,6 +24,8 @@ import org.loopring.lightcone.core.{
   ExpectedFill ⇒ CExpectedFill,
   Ring ⇒ CRing
 }
+import org.web3j.crypto.Hash
+import org.web3j.utils.Numeric
 
 package object actors {
   type Amount = BigInt
@@ -47,6 +49,11 @@ package object actors {
     m: Map[String, ByteString]
   ): Map[String, BigInt] = m.map {
     case (k, v) ⇒ k -> byteString2BigInt(v)
+  }
+
+  implicit def tokensToMarketHash(tokenS: Address, tokenB: Address): String = {
+    val market = BigInt(Hash.sha3(tokenS.getBytes)) ^ BigInt(Hash.sha3(tokenB.getBytes()))
+    Numeric.toHexString(market.toByteArray)
   }
 
   implicit class RichOrderStatus(status: OrderStatus) {

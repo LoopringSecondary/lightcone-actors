@@ -42,7 +42,7 @@ object Routers {
 
   var orderManagerActors = Map[Address, ActorRef]()
 
-  var marketManagingActors = Map[MarketId, ActorRef]()
+  var marketManagingActors = Map[String, ActorRef]()
 
   var ethAccessActor = ActorRef.noSender
 
