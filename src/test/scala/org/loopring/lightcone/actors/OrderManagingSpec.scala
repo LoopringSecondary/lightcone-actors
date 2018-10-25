@@ -24,12 +24,28 @@ class OrderManagingSpec extends FlatSpec with Matchers {
   info("[sbt actors/'testOnly *OrderManagingSpec']")
 
   "simpleTest1" should "say hello" in {
-    val owner = "me"
-    val manager = newOrderManagerActor(owner)
+    val user1 = "me"
+
+    // 充值到链上
+    val lrcaccount = UpdateBalanceAndAllowanceReq(user1, lrc,
+      Some(BalanceAndAllowance(bigIntToByteString(10000), bigIntToByteString(10000))))
+
+    val ethaccount = UpdateBalanceAndAllowanceReq(user1, eth,
+      Some(BalanceAndAllowance(bigIntToByteString(10), bigIntToByteString(10))))
+
+    val viteaccount = UpdateBalanceAndAllowanceReq(user1, vite,
+      Some(BalanceAndAllowance(bigIntToByteString(10000), bigIntToByteString(10000))))
+
+    ethUpdateBalanceAndAllowance(lrcaccount)
+    ethUpdateBalanceAndAllowance(ethaccount)
+    ethUpdateBalanceAndAllowance(viteaccount)
+
+    // 下单
+    val ordermanager = newOrderManagerActor(user1)
     val order = Order("order1", lrc, eth, vite, BigInt(100).toByteArray, BigInt(100).toByteArray, BigInt(100).toByteArray)
     val req = SubmitOrderReq(Some(order))
 
-    val resp = askAndResp(manager, req)
+    val resp = askAndResp(ordermanager, req)
 
     info(resp.toString)
     resp should be(1)

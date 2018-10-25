@@ -77,7 +77,7 @@ class OrderManagingActor(
       case false ⇒ UpdateFilledAmountRes(ErrorCode.ORDER_NOT_EXIST)
     }
 
-    // TODO: 这里不应该是一个req
+    // TODO: 这里不应该是一个req, 返回值只用于测试
     case UpdateBalanceAndAllowanceReq(address, token, accountOpt) ⇒
       if (manager.hasTokenManager(token)) {
         assert(accountOpt.nonEmpty)
@@ -88,7 +88,14 @@ class OrderManagingActor(
         tokenManager.init(account.balance, account.allowance)
 
         val updatedOrders = updatedOrderReceiver.getOrders()
-        updatedOrders.map(tellMarketManager)
+        for {
+          _ ← Future(updatedOrders.map(tellMarketManager))
+        } yield {
+          val tokenBalance = tokenManager.getTokenBalance()
+          UpdateBalanceAndAllowanceRes(ErrorCode.OK, Some(BalanceAndAllowance(tokenBalance.balance, tokenBalance.allowance)))
+        }
+      } else {
+        Future(UpdateBalanceAndAllowanceRes(ErrorCode.TOKEN_NOT_EXIST))
       }
   }
 

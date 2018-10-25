@@ -37,6 +37,7 @@ package object helper {
   implicit val timeout = Timeout(5 seconds)
   implicit val timeProvider = new SystemTimeProvider()
 
+  val accessorimpl = new EthAccessSpecActor()
   implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
   tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 1, eth → 2000, vite -> 0.5))
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
@@ -50,13 +51,23 @@ package object helper {
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 
+  def newEthAccessorActor() = {
+    system.actorOf(Props(accessorimpl), "ethereum-accessor")
+  }
+
+  def ethUpdateBalanceAndAllowance(req: UpdateBalanceAndAllowanceReq) = {
+    var map = accessorimpl.map.getOrElse(req.address, Map.empty[String, BalanceAndAllowance])
+    map += req.token -> req.getBalanceAndAllowance
+    accessorimpl.map += req.address -> map
+  }
+
   def newMarketManagerActor(tokenS: String, tokenB: String) = {
     val marketId = MarketId(tokenS, tokenB)
     val marketConfig = MarketManagerConfig(0, 0)
     val pendingRingPool = new PendingRingPoolImpl()
     val incomeEvaluator = new RingIncomeEstimatorImpl(10)
     val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
-    val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool)
+    val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustEvaluator)
     val marketManaging = new MarketManagingActor(marketManager)
     system.actorOf(Props(marketManaging), "market-manager-" + tokenS + "-" + tokenB)
   }

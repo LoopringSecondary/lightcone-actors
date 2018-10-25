@@ -73,8 +73,9 @@ enum ErrorCode {
   ORDER_NOT_EXIST = 1;
   ORDER_INVALID_AMOUNT_S = 2;
   ACCOUNT_INSUFFICIENT = 3;
-  TOO_MANY_ORDERS = 4;
-  TOO_MANY_ORDERS_FAILED = 5;
+  TOKEN_NOT_EXIST = 4;
+  TOO_MANY_ORDERS = 5;
+  TOO_MANY_ORDERS_FAILED = 6;
 }
 
 message BalanceAndAllowance {
@@ -137,6 +138,7 @@ message UpdateBalanceAndAllowanceReq {
 
 message UpdateBalanceAndAllowanceRes {
   ErrorCode error = 1;
+  BalanceAndAllowance balance_and_allowance = 2;
 }
 
 message UpdatedGasPrice {
