@@ -109,7 +109,7 @@ class OrderManagingActor(
   }
 
   private def tellMarketManager(order: COrder) = {
-    val marketId = MarketId(order.tokenS, order.tokenB)
+    val marketId = tokensToMarketHash(order.tokenS, order.tokenB)
     assert(Routers.marketManagingActors.contains(marketId))
     val market = Routers.marketManagingActors.get(marketId).get
     market ! SubmitOrderReq(Some(order.toProto()))
