@@ -26,7 +26,7 @@ class OrderManagingSpec extends FlatSpec with Matchers {
   "simpleTest1" should "say hello" in {
     val owner = "me"
     val manager = newOrderManagerActor(owner)
-    val order = Order("order1", , BigInt(100).toByteArray, BigInt(100).toByteArray, BigInt(100).toByteArray)
+    val order = Order("order1", lrc, eth, vite, BigInt(100).toByteArray, BigInt(100).toByteArray, BigInt(100).toByteArray)
     val req = SubmitOrderReq(Some(order))
 
     val resp = askAndResp(manager, req)

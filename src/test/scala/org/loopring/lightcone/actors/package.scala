@@ -16,23 +16,35 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ ActorRef, ActorSystem, Props }
 import akka.util.Timeout
 import akka.pattern.ask
 import java.util.concurrent.ForkJoinPool
 
-import scala.concurrent.{Await, ExecutionContext}
+import org.loopring.lightcone.core._
+
+import scala.concurrent.{ Await, ExecutionContext }
 import scala.concurrent.duration._
 
 package object helper {
 
+  val eth = "ETH"
+  val lrc = "LRC"
+  val vite = "VITE"
+
   implicit val system = ActorSystem()
   implicit val context = ExecutionContext.fromExecutor(ForkJoinPool.commonPool())
   implicit val timeout = Timeout(5 seconds)
+  implicit val timeProvider = new SystemTimeProvider()
 
-  val lrc = "LRC"
-  val xyz = "XYZ"
-  val gto = "GTO"
+  implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
+  tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 0.8, eth → 1400, vite -> 0.3))
+  tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
+
+  implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
+
+  val incomeEvaluator = new RingIncomeEstimatorImpl(10)
+  val simpleMatcher = new SimpleRingMatcher(incomeEvaluator)
 
   def newOrderManagerActor(owner: String) = {
     system.actorOf(Props(new OrderManagingActor(owner)), "ordermanager-" + owner)
