@@ -114,3 +114,7 @@ message UpdatedGasPrice {
 message SendRawTransaction {
   bytes data = 1;
 }
+
+message SubmitRingReq {
+  repeated Ring rings = 1;
+}

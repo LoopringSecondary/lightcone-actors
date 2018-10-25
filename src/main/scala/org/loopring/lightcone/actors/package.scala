@@ -155,4 +155,11 @@ package object actors {
       ef.amountMargin
     )
   }
+
+  implicit class RichCRing(ring: CRing) {
+    def toProto(): Ring = Ring(
+      Some(ring.maker.toProto()),
+      Some(ring.taker.toProto())
+    )
+  }
 }

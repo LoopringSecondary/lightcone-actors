@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors
 
 import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.MarketManager
 
 import scala.concurrent.ExecutionContext
@@ -32,6 +33,13 @@ class RingSubmitterActor(
   extends Actor
   with ActorLogging {
 
-  override def receive: Receive = ???
+  val ethereumAccessActor = Routers.ethAccessActor
+
+  override def receive: Receive = {
+    case req: SubmitRingReq ⇒
+      //todo:生成ring数据、签名以及生成rawtransction
+      val data = ByteString.copyFromUtf8(req.rings.toString())
+      ethereumAccessActor ! SendRawTransaction(data)
+  }
 
 }
