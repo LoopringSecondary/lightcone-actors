@@ -37,7 +37,6 @@ package object helper {
   implicit val timeout = Timeout(5 seconds)
   implicit val timeProvider = new SystemTimeProvider()
 
-  val accessorimpl = new EthAccessSpecActor()
   implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
   tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 1, eth → 2000, vite -> 0.5))
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
@@ -52,13 +51,13 @@ package object helper {
   }
 
   def newEthAccessorActor() = {
-    system.actorOf(Props(accessorimpl), "ethereum-accessor")
+    system.actorOf(Props(new EthAccessSpecActor()), "ethereum-accessor")
   }
 
   def ethUpdateBalanceAndAllowance(req: UpdateBalanceAndAllowanceReq) = {
-    var map = accessorimpl.map.getOrElse(req.address, Map.empty[String, BalanceAndAllowance])
+    var map = OnChainAccounts.map.getOrElse(req.address, Map.empty[String, BalanceAndAllowance])
     map += req.token -> req.getBalanceAndAllowance
-    accessorimpl.map += req.address -> map
+    OnChainAccounts.map += req.address -> map
   }
 
   def newMarketManagerActor(tokenS: String, tokenB: String) = {
