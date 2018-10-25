@@ -38,7 +38,7 @@ package object helper {
   implicit val timeProvider = new SystemTimeProvider()
 
   implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
-  tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 0.8, eth → 1400, vite -> 0.3))
+  tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 1, eth → 2000, vite -> 0.5))
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
 
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
@@ -47,7 +47,18 @@ package object helper {
   val simpleMatcher = new SimpleRingMatcher(incomeEvaluator)
 
   def newOrderManagerActor(owner: String) = {
-    system.actorOf(Props(new OrderManagingActor(owner)), "ordermanager-" + owner)
+    system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
+  }
+
+  def newMarketManagerActor(tokenS: String, tokenB: String) = {
+    val marketId = MarketId(tokenS, tokenB)
+    val marketConfig = MarketManagerConfig(0, 0)
+    val pendingRingPool = new PendingRingPoolImpl()
+    val incomeEvaluator = new RingIncomeEstimatorImpl(10)
+    val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
+    val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool)
+    val marketManaging = new MarketManagingActor(marketManager)
+    system.actorOf(Props(marketManaging), "market-manager-" + tokenS + "-" + tokenB)
   }
 
   def askAndResp(actor: ActorRef, req: Any) = {
