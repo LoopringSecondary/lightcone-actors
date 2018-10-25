@@ -34,7 +34,7 @@ class OrderManagingActor(
   extends Actor
   with ActorLogging {
 
-  val ethereumAccessActor: ActorRef = ???
+  val ethereumAccessActor: ActorRef = Routers.ethAccessActor
 
   implicit val orderPool = new OrderPool()
   val manager: OrderManager = OrderManager.default(10000)
