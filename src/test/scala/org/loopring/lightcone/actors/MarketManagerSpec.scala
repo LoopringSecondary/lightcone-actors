@@ -84,16 +84,16 @@ class MarketManagerSpec extends FlatSpec with Matchers {
       matchable = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
     )
     val delMarker1 = maker1.copy(status = OrderStatus.CANCELLED_BY_USER)
-    marketManagerActor ? maker1 onComplete (
+    marketManagerActor ? SubmitOrderReq(Some(maker1)) onComplete (
       res ⇒ println(res)
     )
 
-    marketManagerActor ? maker2 onComplete (
+    marketManagerActor ? SubmitOrderReq(Some(maker2)) onComplete (
       res ⇒ println(res)
     )
-    marketManagerActor ! delMarker1
+    marketManagerActor ! SubmitOrderReq(Some(delMarker1))
 
-    marketManagerActor ? taker onComplete (
+    marketManagerActor ? SubmitOrderReq(Some(taker)) onComplete (
       res ⇒ println(res)
     )
 
