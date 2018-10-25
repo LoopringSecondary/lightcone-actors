@@ -34,7 +34,7 @@ class OrderManagingActor(
   extends Actor
   with ActorLogging {
 
-  val ethereumAccessActor: ActorRef = ???
+  //val ethereumAccessActor: ActorRef = ???
 
   implicit val orderPool = new OrderPool()
   val manager: OrderManager = OrderManager.default(10000)
@@ -43,6 +43,12 @@ class OrderManagingActor(
     case SubmitOrderReq(orderOpt) ⇒
       assert(orderOpt.nonEmpty)
       val order = orderOpt.get.toPojo
+
+      Set(order.tokenS, order.tokenFee).map(token ⇒ {
+        if (!manager.hasTokenManager(token)) {
+          manager.addTokenManager(token)
+        }
+      })
       assert(order.outstanding.amountS > 0)
 
       // Set(order.tokenS, order.tokenFee).map {
