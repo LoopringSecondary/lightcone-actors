@@ -35,12 +35,12 @@ class MarketManagingActor(
   var latestGasPrice = 0l
 
   override def receive() = LoggingReceive {
-    case order: Order ⇒
+    case SubmitOrderReq(Some(order)) ⇒
       order.status match {
         case OrderStatus.NEW ⇒
-          sender ! manager.submitOrder(order.toPojo())
+          sender ! manager.submitOrder(order.toPojo)
         case _ ⇒
-          manager.deleteOrder(order.toPojo())
+          manager.deleteOrder(order.toPojo)
       }
     case updatedGasPrce: UpdatedGasPrice ⇒
       if (latestGasPrice > updatedGasPrce.gasPrice) {
