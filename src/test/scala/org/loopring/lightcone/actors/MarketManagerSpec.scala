@@ -28,6 +28,8 @@ class MarketManagerSpec extends FlatSpec with Matchers {
   implicit val ec = system.dispatcher
   implicit val timeout = new Timeout(1 seconds)
 
+  Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+  Routers.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
   val lrc = "LRC"
   val eth = "ETH"
 
@@ -84,18 +86,13 @@ class MarketManagerSpec extends FlatSpec with Matchers {
       matchable = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
     )
     val delMarker1 = maker1.copy(status = OrderStatus.CANCELLED_BY_USER)
-    marketManagerActor ? SubmitOrderReq(Some(maker1)) onComplete (
-      res ⇒ println(res)
-    )
-
-    marketManagerActor ? SubmitOrderReq(Some(maker2)) onComplete (
-      res ⇒ println(res)
-    )
-    marketManagerActor ! SubmitOrderReq(Some(delMarker1))
-
-    marketManagerActor ? SubmitOrderReq(Some(taker)) onComplete (
-      res ⇒ println(res)
-    )
+    marketManagerActor ! SubmitOrderReq(Some(maker1))
+    //
+    //    marketManagerActor ! SubmitOrderReq(Some(maker2))
+    //
+    //    marketManagerActor ! SubmitOrderReq(Some(delMarker1))
+    //
+    marketManagerActor ! SubmitOrderReq(Some(taker))
 
   }
 }

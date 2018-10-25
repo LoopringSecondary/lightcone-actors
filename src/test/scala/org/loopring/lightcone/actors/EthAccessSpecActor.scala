@@ -26,25 +26,24 @@ class EthAccessSpecActor()(
     ec: ExecutionContext,
     timeout: Timeout
 )
-  extends Actor
-  with ActorLogging {
+  extends Actor {
 
-  var map = Map[Address, Map[String,BalanceAndAllowance]]()
+  var map = Map[Address, Map[String, BalanceAndAllowance]]()
 
   override def receive: Receive = {
-    case req:GetBalanceAndAllowancesReq ⇒
+    case req: GetBalanceAndAllowancesReq ⇒
       val balanceAndAllowance = map.get(req.address) map {
         tokens ⇒
           tokens map {
             token ⇒ (token._1, token._2)
           }
       }
-      GetBalanceAndAllowancesResp(
+      sender ! GetBalanceAndAllowancesResp(
         address = req.address,
         balanceAndAllowanceMap = balanceAndAllowance.get
       )
-    case req:SendRawTransaction ⇒
+    case req: SendRawTransaction ⇒
       //todo：测试，只是打印下
-      log.debug(req.toString)
+      println("received raw transaction:", req.data.toStringUtf8)
   }
 }
