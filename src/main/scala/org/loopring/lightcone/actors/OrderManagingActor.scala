@@ -16,10 +16,9 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core._
-import com.google.protobuf.ByteString
+import org.loopring.lightcone.core.{Order => COrder, _}
 import akka.actor._
-import akka.event.{ Logging, LoggingReceive }
+import akka.event.{ Logging,  LoggingReceive}
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.{ ExecutionContext, Future }
@@ -38,6 +37,12 @@ class OrderManagingActor(
 
   implicit val orderPool = new OrderPool()
   val manager: OrderManager = OrderManager.default(10000)
+
+  orderPool.addCallback(
+    (order: COrder) ⇒ {
+      // todo: send to orderbook
+    }
+  )
 
   def receive() = LoggingReceive {
     case SubmitOrderReq(orderOpt) ⇒
