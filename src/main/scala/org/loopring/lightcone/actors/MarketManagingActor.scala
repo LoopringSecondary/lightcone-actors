@@ -17,11 +17,10 @@
 package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core._
-import com.google.protobuf.ByteString
 import akka.actor._
-import akka.event.{ Logging, LoggingReceive }
-import akka.pattern.ask
+import akka.event.LoggingReceive
 import akka.util.Timeout
+
 import scala.concurrent.{ ExecutionContext, Future }
 
 class MarketManagingActor(
@@ -33,8 +32,22 @@ class MarketManagingActor(
 )
   extends Actor
   with ActorLogging {
+  var latestGasPrice = 0l
 
-  def receive() = LoggingReceive {
-    case _ ⇒ log.info("")
+  override def receive() = LoggingReceive {
+    case order: Order ⇒
+      order.status match {
+        case OrderStatus.NEW ⇒
+          sender ! manager.submitOrder(order.toPojo())
+        case _ ⇒
+          manager.deleteOrder(order.toPojo())
+      }
+    case updatedGasPrce: UpdatedGasPrice ⇒
+      if (latestGasPrice > updatedGasPrce.gasPrice) {
+        manager.triggerMatch()
+      }
+      latestGasPrice = updatedGasPrce.gasPrice
+    case _ ⇒
   }
+
 }
