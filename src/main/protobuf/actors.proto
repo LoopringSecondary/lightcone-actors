@@ -72,6 +72,9 @@ enum ErrorCode {
   OK = 0;
   ORDER_NOT_EXIST = 1;
   ORDER_INVALID_AMOUNT_S = 2;
+  ACCOUNT_INSUFFICIENT = 3;
+  TOO_MANY_ORDERS = 4;
+  TOO_MANY_ORDERS_FAILED = 5;
 }
 
 message BalanceAndAllowance {

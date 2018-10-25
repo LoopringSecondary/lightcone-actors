@@ -27,20 +27,24 @@ class OrderManagingActor(
     owner: Address
 )(
     implicit
-    ethereumAccessActor: ActorRef,
-    marketManagingActor: ActorRef,
+    dustOrderEvaluator: DustOrderEvaluator,
     ec: ExecutionContext,
-    timeout: Timeout,
-    dustOrderEvaluator: DustOrderEvaluator
+    timeout: Timeout
 )
   extends Actor
   with ActorLogging {
+
+  val ethereumAccessActor: ActorRef = ???
+  val marketManagingActor: ActorRef = ???
 
   implicit val orderPool = new OrderPool()
   val updatedOrderReceiver = new UpdatedOrderReceiver()
   orderPool.addCallback(updatedOrderReceiver.onUpdatedOrder)
   val manager: OrderManager = OrderManager.default(10000)
 
+  // todo: 如何初始化？在本actor初始化订单数据还是在其他actor获取所有数据后批量发送过来？？？
+
+  // todo: 返回到上一层调用时status到error的映射关系
   def receive() = LoggingReceive {
     case SubmitOrderReq(orderOpt) ⇒
       assert(orderOpt.nonEmpty)
@@ -56,18 +60,34 @@ class OrderManagingActor(
         updatedOrders = if (success) updatedOrderReceiver.getOrders() else Seq.empty
       } yield {
         updatedOrders.foreach { order ⇒
-          marketManagingActor ! SubmitOrderReq(Some(order.toProto()))
+          marketManagingActor ! SubmitOrderReq(Some(order.toProto))
         }
       }
 
-    case CancelOrderReq(id) ⇒
-      if(manager.cancelOrder(id)) {
-        notifyMatchEngine()
-      }
+    case CancelOrderReq(id) ⇒ manager.cancelOrder(id) match {
+      case true ⇒ for {
+        updatedOrders ← Future(updatedOrderReceiver.getOrders())
+        _ ← Future(updatedOrders.foreach { order ⇒
+          marketManagingActor ! SubmitOrderReq(Some(order.toProto))
+        })
+      } yield CancelOrderRes(ErrorCode.OK)
+      case false ⇒ CancelOrderRes(ErrorCode.ORDER_NOT_EXIST)
+    }
 
-    case UpdateFilledAmountReq(id, orderFilledAmountS) ⇒
-      manager.adjustOrder(id, orderFilledAmountS)
+    // amountS为剩余量
+    case UpdateFilledAmountReq(id, amountS) ⇒ manager.adjustOrder(id, amountS) match {
+      case true ⇒ for {
+        updatedOrders ← Future(updatedOrderReceiver.getOrders())
+        _ ← Future(
+          updatedOrders.foreach { order ⇒
+            marketManagingActor ! SubmitOrderReq(Some(order.toProto))
+          }
+        )
+      } yield UpdateFilledAmountRes(ErrorCode.OK)
+      case false ⇒ UpdateFilledAmountRes(ErrorCode.ORDER_NOT_EXIST)
+    }
 
+    // TODO: 这里不应该是一个req
     case UpdateBalanceAndAllowanceReq(address, token, accountOpt) ⇒
       assert(accountOpt.nonEmpty)
       val account = accountOpt.get
@@ -75,6 +95,11 @@ class OrderManagingActor(
       assert(account.allowance > 0)
 
       manager.getTokenManager(token).init(account.balance, account.allowance)
+
+      val updatedOrders = updatedOrderReceiver.getOrders()
+      updatedOrders.foreach { order ⇒
+        marketManagingActor ! SubmitOrderReq(Some(order.toProto))
+      }
   }
 
   private def getTokenManagerAsFuture(token: Address): Future[TokenManager] = {
@@ -92,15 +117,17 @@ class OrderManagingActor(
         }
     }
   }
-
-  private def notifyMatchEngine() = {
-    val orders = updatedOrderReceiver.getOrders()
-    orders.foreach{order => marketManagingActor ! SubmitOrderReq(Some(order.toProto()))}
-  }
 }
 
 class UpdatedOrderReceiver {
-  def onUpdatedOrder(order: COrder): Unit = {}
+  var receivedOrders = Seq.empty[COrder]
 
-  def getOrders(): Seq[COrder] = ???
+  def onUpdatedOrder(order: COrder) = {
+    receivedOrders :+ order
+  }
+
+  def getOrders(): Seq[COrder] = {
+    receivedOrders.drop(receivedOrders.size)
+  }
+
 }
