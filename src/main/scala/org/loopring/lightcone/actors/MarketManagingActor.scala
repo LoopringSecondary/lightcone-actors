@@ -18,6 +18,7 @@ package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core._
 import akka.actor._
+import akka.pattern.ask
 import akka.event.LoggingReceive
 import akka.util.Timeout
 
@@ -40,13 +41,18 @@ class MarketManagingActor(
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
         case OrderStatus.NEW ⇒
-          sender ! manager.submitOrder(order.toPojo)
+          val res = manager.submitOrder(order.toPojo)
+          val rings = res.rings map (_.toProto)
+          if (rings.nonEmpty) {
+            ringSubmitterActor ! SubmitRingReq(rings = rings)
+          }
         case _ ⇒
           manager.deleteOrder(order.toPojo)
       }
     case updatedGasPrce: UpdatedGasPrice ⇒
       if (latestGasPrice > updatedGasPrce.gasPrice) {
-        manager.triggerMatch()
+        val res = manager.triggerMatch()
+        ringSubmitterActor ! SubmitRingReq(rings = res.rings map (_.toProto))
       }
       latestGasPrice = updatedGasPrce.gasPrice
     case _ ⇒

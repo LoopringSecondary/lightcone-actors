@@ -30,8 +30,7 @@ class EthAccessSpecActor()(
     ec: ExecutionContext,
     timeout: Timeout
 )
-  extends Actor
-  with ActorLogging {
+  extends Actor {
 
   override def receive: Receive = {
     case req: GetBalanceAndAllowancesReq ⇒
@@ -41,12 +40,12 @@ class EthAccessSpecActor()(
             token ⇒ (token._1, token._2)
           }
       }
-      GetBalanceAndAllowancesRes(
+      sender ! GetBalanceAndAllowancesRes(
         address = req.address,
         balanceAndAllowanceMap = balanceAndAllowance.get
       )
     case req: SendRawTransaction ⇒
       //todo：测试，只是打印下
-      log.debug(req.toString)
+      println("received raw transaction:", req.data.toStringUtf8)
   }
 }

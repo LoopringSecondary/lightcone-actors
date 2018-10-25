@@ -34,7 +34,7 @@ package object helper {
 
   implicit val system = ActorSystem()
   implicit val context = ExecutionContext.fromExecutor(ForkJoinPool.commonPool())
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout = Timeout(20 seconds)
   implicit val timeProvider = new SystemTimeProvider()
 
   implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
@@ -43,15 +43,13 @@ package object helper {
 
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
-  val incomeEvaluator = new RingIncomeEstimatorImpl(10)
-  val simpleMatcher = new SimpleRingMatcher(incomeEvaluator)
+  Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+  Routers.marketManagingActors = Map(
+    tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+  )
 
   def newOrderManagerActor(owner: String) = {
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
-  }
-
-  def newEthAccessorActor() = {
-    system.actorOf(Props(new EthAccessSpecActor()), "ethereum-accessor")
   }
 
   def ethUpdateBalanceAndAllowance(req: UpdateBalanceAndAllowanceReq) = {
@@ -60,18 +58,18 @@ package object helper {
     OnChainAccounts.map += req.address -> map
   }
 
-  def newMarketManagerActor(tokenS: String, tokenB: String) = {
+  def newMarketManager(tokenS: String, tokenB: String) = {
     val marketId = MarketId(tokenS, tokenB)
     val marketConfig = MarketManagerConfig(0, 0)
     val pendingRingPool = new PendingRingPoolImpl()
     val incomeEvaluator = new RingIncomeEstimatorImpl(10)
     val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
     val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustEvaluator)
-    val marketManaging = new MarketManagingActor(marketManager)
-    system.actorOf(Props(marketManaging), "market-manager-" + tokenS + "-" + tokenB)
+    new MarketManagingActor(marketManager)
   }
 
   def askAndResp(actor: ActorRef, req: Any) = {
-    Await.result(actor ? req, timeout.duration)
+    val resFuture = actor ? req
+    Await.result(resFuture, timeout.duration)
   }
 }

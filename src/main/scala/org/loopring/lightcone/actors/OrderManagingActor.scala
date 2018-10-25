@@ -103,9 +103,7 @@ class OrderManagingActor(
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
     } else {
-
       val tm = manager.addTokenManager(new TokenManager(token, 10000))
-
       (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, Seq(token)))
         .mapTo[GetBalanceAndAllowancesRes].map(_.balanceAndAllowanceMap(token)).map {
           ba ⇒
@@ -127,11 +125,13 @@ class UpdatedOrderReceiver {
   var receivedOrders = Seq.empty[COrder]
 
   def onUpdatedOrder(order: COrder) = {
-    receivedOrders :+ order
+    receivedOrders :+= order
   }
 
   def getOrders(): Seq[COrder] = {
-    receivedOrders.drop(receivedOrders.size)
+    val ret = receivedOrders
+    receivedOrders = Seq.empty
+    ret
   }
 
 }
