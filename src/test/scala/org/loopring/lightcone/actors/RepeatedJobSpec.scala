@@ -18,13 +18,14 @@ package org.loopring.lightcone.actors
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.{ ActorLogging, ActorSystem, Props }
+import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base.{ Job, RepeatedJobActor }
 import org.scalatest._
 
-import scala.concurrent.{ ExecutionContext, Future }
 import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Future }
 
 class RepeatedJobSpec extends FlatSpec with Matchers {
 
@@ -36,11 +37,11 @@ class RepeatedJobSpec extends FlatSpec with Matchers {
       ec: ExecutionContext,
       timeout: Timeout
   )
-    extends RepeatedJobActor {
+    extends RepeatedJobActor with ActorLogging {
 
     initAndStartNextRound(jobs: _*)
 
-    override def receive() = super.receive orElse {
+    override def receive() = super.receive orElse LoggingReceive {
       case _ ⇒
     }
   }
@@ -52,12 +53,12 @@ class RepeatedJobSpec extends FlatSpec with Matchers {
     def test1(): Future[Unit] = for {
       _ ← Future.successful()
     } yield {
-      info("repeatedJob.test1 time:" + System.currentTimeMillis() + " i1:" + i1.getAndIncrement())
+      info("repeatedJob.test1 time:" + " i1:" + i1.getAndIncrement())
     }
 
     def test2(): Future[Unit] = for {
       _ ← Future.successful()
-    } yield info("repeatedJob.test2 time:" + System.currentTimeMillis() + " i2:" + i2.getAndIncrement())
+    } yield info("repeatedJob.test2 time:" + " i2:" + i2.getAndIncrement())
 
     system.actorOf(Props(new JobActor(
       Job(id = 1, name = "test1", scheduleDelay = 1000, callMethod = test1 _),

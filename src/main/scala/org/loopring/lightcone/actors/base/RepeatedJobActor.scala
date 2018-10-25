@@ -28,10 +28,10 @@ case class Job(
   callMethod: () ⇒ Future[Unit],
 )
 
-class JobWithStatus(jobArg:Job) {
+class JobWithStatus(j:Job) {
   var cancel:Option[Cancellable] = None
   var lastRunTime:Long = 0
-  var job: Job = jobArg
+  var job: Job = j
 }
 
 trait RepeatedJobActor extends Actor {
@@ -48,7 +48,6 @@ trait RepeatedJobActor extends Actor {
     jobWithStatus.cancel.map(_.cancel())
     val delay = jobWithStatus.job.scheduleDelay -
         (System.currentTimeMillis - jobWithStatus.lastRunTime)
-
     if (delay > 0) {
       jobWithStatus.cancel = Some(
         context.system.scheduler.scheduleOnce(
