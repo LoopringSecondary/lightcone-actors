@@ -65,7 +65,7 @@ class OrderFillHistoryActor()(
 
   def getFilledAmount(orderIds: Seq[String]): Future[Map[String, BigInt]] = {
     (ethereumAccessActor ? GetFilledAmountReq(orderIds))
-      .mapTo[GetFilledAmountResp]
+      .mapTo[GetFilledAmountRes]
       .map(_.filledAmountSMap)
   }
 }
