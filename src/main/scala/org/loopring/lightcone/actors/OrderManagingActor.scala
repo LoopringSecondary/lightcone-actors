@@ -28,13 +28,13 @@ class OrderManagingActor(
     owner: Address
 )(
     implicit
+    ethereumAccessActor: ActorRef,
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    dustOrderEvaluator: DustOrderEvaluator,
 )
   extends Actor
   with ActorLogging {
-
-  //val ethereumAccessActor: ActorRef = ???
 
   implicit val orderPool = new OrderPool()
   val manager: OrderManager = OrderManager.default(10000)
@@ -43,27 +43,47 @@ class OrderManagingActor(
     case SubmitOrderReq(orderOpt) ⇒
       assert(orderOpt.nonEmpty)
       val order = orderOpt.get.toPojo
-
-      Set(order.tokenS, order.tokenFee).map(token ⇒ {
-        if (!manager.hasTokenManager(token)) {
-          manager.addTokenManager(token)
-        }
-      })
       assert(order.outstanding.amountS > 0)
 
-      // Set(order.tokenS, order.tokenFee).map {
-      //   token ⇒
+      var undefinedTokenSet = Set.empty[String]
+      Set(order.tokenS, order.tokenFee).map(token ⇒ {
+        if (!manager.hasTokenManager(token)) {
+          undefinedTokenSet += token
+          val tokenManager = new TokenManager(token)
+          manager.addTokenManager(tokenManager)
+        }
+      })
 
-      //     for {
-      //       resp ← (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, token)).mapTo[GetBalanceAndAllowancesResp]
-      //     }
+      if (undefinedTokenSet.nonEmpty) {
+        Future.successful(for {
+          resp <- ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, undefinedTokenSet.toSeq)
+        } yield resp match {
+          case Some(res: GetBalanceAndAllowancesRes) => res.balanceAndAllowanceMap.map(x => {
+            val token = x._1
+            val balance  = byteString2BigInt(x._2.balance)
+            val allowance = byteString2BigInt(x._2.allowance)
+            manager.getTokenManager(token).init(balance, allowance)
+          })
+        })
+      }
 
-      //     if (!manager.hasTokenManager(token)) {
-      //       val tokenManager: TokenManager = ???
-      //       tokenManager.init(123, 345)
-      //       manager.addTokenManager(tokenManager)
-      //     }
-      // }
       manager.submitOrder(order)
+      SubmitOrderRes()
+
+    case CancelOrderReq(id) =>
+      manager.cancelOrder(id)
+
+    case UpdateFilledAmountReq(id, orderFilledAmountS) =>
+      manager.adjustOrder(id, orderFilledAmountS)
+
+    case UpdateBalanceAndAllowanceReq(address, token, accountOpt) =>
+      assert(accountOpt.nonEmpty)
+      val balance = byteString2BigInt(accountOpt.get.balance)
+      val allowance = byteString2BigInt(accountOpt.get.allowance)
+
+      assert(balance > 0)
+      assert(allowance > 0)
+
+      manager.getTokenManager(token).init(balance, allowance)
   }
 }

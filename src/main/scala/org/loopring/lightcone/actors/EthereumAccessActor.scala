@@ -16,10 +16,8 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core._
-import com.google.protobuf.ByteString
 import akka.actor._
-import akka.event.{ Logging, LoggingReceive }
+import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.{ ExecutionContext, Future }
@@ -41,6 +39,6 @@ class EthereumAccessActor()(
         token -> BalanceAndAllowance(balance, allowance)
       }.toMap
 
-      sender ! GetBalanceAndAllowancesResp(address, map_)
+      sender ! GetBalanceAndAllowancesRes(address, map_)
   }
 }

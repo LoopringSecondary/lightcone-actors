@@ -56,7 +56,7 @@ class OrderFillHistoryActor()(
         }
       } yield {
         if (updated.outstanding.amountS <= 0) {
-          sender ! SubmitOrderResp(ErrorCode.ORDER_INVALID_AMOUNT_S, None)
+          sender ! SubmitOrderRes(ErrorCode.ORDER_INVALID_AMOUNT_S, None)
         } else {
           orderManagignActor forward SubmitOrderReq(Some(updated.toProto))
         }

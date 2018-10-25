@@ -84,7 +84,7 @@ message GetBalanceAndAllowancesReq {
   repeated string tokens = 2;
 }
 
-message GetBalanceAndAllowancesResp {
+message GetBalanceAndAllowancesRes {
   string address = 1;
   map<string, BalanceAndAllowance> balance_and_allowance_map = 2;
 }
@@ -93,7 +93,7 @@ message SubmitOrderReq {
   Order order = 1;
 }
 
-message SubmitOrderResp {
+message SubmitOrderRes {
   ErrorCode error = 1;
   Order order = 2;
 }
