@@ -110,3 +110,7 @@ message SubmitOrderResp {
 message UpdatedGasPrice {
   int64 gas_price = 1;
 }
+
+message SendRawTransaction {
+  bytes data = 1;
+}
