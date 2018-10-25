@@ -16,9 +16,9 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.{Order => COrder, _}
+import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import akka.actor._
-import akka.event.{ Logging,  LoggingReceive}
+import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.{ ExecutionContext, Future }
@@ -28,21 +28,18 @@ class OrderManagingActor(
 )(
     implicit
     ethereumAccessActor: ActorRef,
+    marketManagingActor: ActorRef,
     ec: ExecutionContext,
     timeout: Timeout,
-    dustOrderEvaluator: DustOrderEvaluator,
+    dustOrderEvaluator: DustOrderEvaluator
 )
   extends Actor
   with ActorLogging {
 
   implicit val orderPool = new OrderPool()
+  val updatedOrderReceiver = new UpdatedOrderReceiver()
+  orderPool.addCallback(updatedOrderReceiver.onUpdatedOrder)
   val manager: OrderManager = OrderManager.default(10000)
-
-  orderPool.addCallback(
-    (order: COrder) ⇒ {
-      // todo: send to orderbook
-    }
-  )
 
   def receive() = LoggingReceive {
     case SubmitOrderReq(orderOpt) ⇒
@@ -50,45 +47,60 @@ class OrderManagingActor(
       val order = orderOpt.get.toPojo
       assert(order.outstanding.amountS > 0)
 
-      var undefinedTokenSet = Set.empty[String]
-      Set(order.tokenS, order.tokenFee).map(token ⇒ {
-        if (!manager.hasTokenManager(token)) {
-          undefinedTokenSet += token
-          val tokenManager = new TokenManager(token)
-          manager.addTokenManager(tokenManager)
+      for {
+        _ ← Future.sequence(Seq( // run in parallel
+          getTokenManagerAsFuture(order.tokenS),
+          getTokenManagerAsFuture(order.tokenFee)
+        ))
+        success = manager.submitOrder(order)
+        updatedOrders = if (success) updatedOrderReceiver.getOrders() else Seq.empty
+      } yield {
+        updatedOrders.foreach { order ⇒
+          marketManagingActor ! SubmitOrderReq(Some(order.toProto()))
         }
-      })
-
-      if (undefinedTokenSet.nonEmpty) {
-        Future.successful(for {
-          resp <- ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, undefinedTokenSet.toSeq)
-        } yield resp match {
-          case Some(res: GetBalanceAndAllowancesRes) => res.balanceAndAllowanceMap.map(x => {
-            val token = x._1
-            val balance  = byteString2BigInt(x._2.balance)
-            val allowance = byteString2BigInt(x._2.allowance)
-            manager.getTokenManager(token).init(balance, allowance)
-          })
-        })
       }
 
-      manager.submitOrder(order)
-      SubmitOrderRes()
+    case CancelOrderReq(id) ⇒
+      if(manager.cancelOrder(id)) {
+        notifyMatchEngine()
+      }
 
-    case CancelOrderReq(id) =>
-      manager.cancelOrder(id)
-
-    case UpdateFilledAmountReq(id, orderFilledAmountS) =>
+    case UpdateFilledAmountReq(id, orderFilledAmountS) ⇒
       manager.adjustOrder(id, orderFilledAmountS)
 
-    case UpdateBalanceAndAllowanceReq(address, token, accountOpt) =>
+    case UpdateBalanceAndAllowanceReq(address, token, accountOpt) ⇒
       assert(accountOpt.nonEmpty)
-      val balance = byteString2BigInt(accountOpt.get.balance)
-      val allowance = byteString2BigInt(accountOpt.get.allowance)
+      val account = accountOpt.get
+      assert(account.balance > 0)
+      assert(account.allowance > 0)
 
-      assert(balance > 0)
-      assert(allowance > 0)
-
-      manager.getTokenManager(token).init(balance, allowance)
+      manager.getTokenManager(token).init(account.balance, account.allowance)
   }
+
+  private def getTokenManagerAsFuture(token: Address): Future[TokenManager] = {
+    if (manager.hasTokenManager(token)) {
+      Future.successful(manager.getTokenManager(token))
+    } else {
+
+      val tm = manager.addTokenManager(new TokenManager(token, 10000))
+
+      (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, Seq(token)))
+        .mapTo[GetBalanceAndAllowancesRes].map(_.balanceAndAllowanceMap(token)).map {
+          ba ⇒
+            tm.init(ba.balance, ba.allowance)
+            tm
+        }
+    }
+  }
+
+  private def notifyMatchEngine() = {
+    val orders = updatedOrderReceiver.getOrders()
+    orders.foreach{order => marketManagingActor ! SubmitOrderReq(Some(order.toProto()))}
+  }
+}
+
+class UpdatedOrderReceiver {
+  def onUpdatedOrder(order: COrder): Unit = {}
+
+  def getOrders(): Seq[COrder] = ???
 }
