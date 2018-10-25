@@ -34,8 +34,8 @@ class OrderManagingActor(
   extends Actor
   with ActorLogging {
 
-  val ethereumAccessActor: ActorRef = ???
-  val marketManagingActor: ActorRef = ???
+  val ethereumAccessActor = Routers.ethAccessActor
+  val marketManagingActor = Routers.marketManagingActors
 
   implicit val orderPool = new OrderPool()
   val updatedOrderReceiver = new UpdatedOrderReceiver()
@@ -58,18 +58,12 @@ class OrderManagingActor(
         ))
         success = manager.submitOrder(order)
         updatedOrders = if (success) updatedOrderReceiver.getOrders() else Seq.empty
-      } yield {
-        updatedOrders.foreach { order ⇒
-          marketManagingActor ! SubmitOrderReq(Some(order.toProto))
-        }
-      }
+      } yield updatedOrders.map(tellMarketManager)
 
     case CancelOrderReq(id) ⇒ manager.cancelOrder(id) match {
       case true ⇒ for {
         updatedOrders ← Future(updatedOrderReceiver.getOrders())
-        _ ← Future(updatedOrders.foreach { order ⇒
-          marketManagingActor ! SubmitOrderReq(Some(order.toProto))
-        })
+        _ ← Future(updatedOrders.map(tellMarketManager))
       } yield CancelOrderRes(ErrorCode.OK)
       case false ⇒ CancelOrderRes(ErrorCode.ORDER_NOT_EXIST)
     }
@@ -78,27 +72,23 @@ class OrderManagingActor(
     case UpdateFilledAmountReq(id, amountS) ⇒ manager.adjustOrder(id, amountS) match {
       case true ⇒ for {
         updatedOrders ← Future(updatedOrderReceiver.getOrders())
-        _ ← Future(
-          updatedOrders.foreach { order ⇒
-            marketManagingActor ! SubmitOrderReq(Some(order.toProto))
-          }
-        )
+        _ ← Future(updatedOrders.map(tellMarketManager))
       } yield UpdateFilledAmountRes(ErrorCode.OK)
       case false ⇒ UpdateFilledAmountRes(ErrorCode.ORDER_NOT_EXIST)
     }
 
     // TODO: 这里不应该是一个req
     case UpdateBalanceAndAllowanceReq(address, token, accountOpt) ⇒
-      assert(accountOpt.nonEmpty)
-      val account = accountOpt.get
-      assert(account.balance > 0)
-      assert(account.allowance > 0)
+      if (manager.hasTokenManager(token)) {
+        assert(accountOpt.nonEmpty)
+        val account = accountOpt.get
+        assert(account.balance > 0 && account.allowance > 0)
 
-      manager.getTokenManager(token).init(account.balance, account.allowance)
+        val tokenManager = manager.getTokenManager(token)
+        tokenManager.init(account.balance, account.allowance)
 
-      val updatedOrders = updatedOrderReceiver.getOrders()
-      updatedOrders.foreach { order ⇒
-        marketManagingActor ! SubmitOrderReq(Some(order.toProto))
+        val updatedOrders = updatedOrderReceiver.getOrders()
+        updatedOrders.map(tellMarketManager)
       }
   }
 
@@ -116,6 +106,13 @@ class OrderManagingActor(
             tm
         }
     }
+  }
+
+  private def tellMarketManager(order: COrder) = {
+    val marketId = MarketId(order.tokenS, order.tokenB)
+    assert(Routers.marketManagingActors.contains(marketId))
+    val market = Routers.marketManagingActors.get(marketId).get
+    market ! SubmitOrderReq(Some(order.toProto()))
   }
 }
 
