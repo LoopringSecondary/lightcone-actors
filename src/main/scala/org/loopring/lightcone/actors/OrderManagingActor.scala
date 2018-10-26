@@ -16,11 +16,13 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+
+import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
+
 import scala.concurrent.{ ExecutionContext, Future }
 
 class OrderManagingActor(
@@ -28,14 +30,14 @@ class OrderManagingActor(
 )(
     implicit
     dustOrderEvaluator: DustOrderEvaluator,
+    routes: Routers,
     ec: ExecutionContext,
     timeout: Timeout
 )
   extends Actor
   with ActorLogging {
 
-  val ethereumAccessActor = Routers.ethAccessActor
-  val marketManagingActor = Routers.marketManagingActors
+  val ethereumAccessActor = routes.getEthAccessActor
 
   implicit val orderPool = new OrderPool()
   val updatedOrderReceiver = new UpdatedOrderReceiver()
@@ -45,7 +47,7 @@ class OrderManagingActor(
   // todo: 如何初始化？在本actor初始化订单数据还是在其他actor获取所有数据后批量发送过来？？？
 
   // todo: 返回到上一层调用时status到error的映射关系
-  def receive(): Receive = {
+  def receive() = LoggingReceive {
     case SubmitOrderReq(orderOpt) ⇒
       assert(orderOpt.nonEmpty)
       val reqOrder = orderOpt.get.toPojo
@@ -118,9 +120,10 @@ class OrderManagingActor(
   }
 
   private def tellMarketManager(order: COrder) = {
-    val marketId = tokensToMarketHash(order.tokenS, order.tokenB)
-    assert(Routers.marketManagingActors.contains(marketId))
-    val market = Routers.marketManagingActors.get(marketId).get
+    val marketId = MarketId(order.tokenS, order.tokenB)
+    val marketOpt = routes.getMarketManagingActor(marketId)
+    assert(marketOpt.nonEmpty)
+    val market = marketOpt.get
     market ! SubmitOrderReq(Some(order.toProto()))
   }
 

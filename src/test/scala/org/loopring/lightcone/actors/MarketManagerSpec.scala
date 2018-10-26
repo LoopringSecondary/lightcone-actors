@@ -28,8 +28,9 @@ class MarketManagerSpec extends FlatSpec with Matchers {
   implicit val ec = system.dispatcher
   implicit val timeout = new Timeout(1 seconds)
 
-  Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-  Routers.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
+  implicit val routes = new SimpleRoutersImpl
+  routes.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+  routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
   val lrc = "LRC"
   val eth = "ETH"
 

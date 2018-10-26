@@ -23,7 +23,7 @@ class OrderManagingSpec extends FlatSpec with Matchers {
 
   info("[sbt actors/'testOnly *OrderManagingSpec']")
 
-  "simpleTest1" should "say hello" in {
+  "simpleTest1" should "submit 2 orders" in {
     val user1 = "me"
 
     // 充值到链上
@@ -45,11 +45,17 @@ class OrderManagingSpec extends FlatSpec with Matchers {
 
     val order1 = Order("order1", lrc, eth, vite, BigInt(1000).toByteArray, BigInt(1).toByteArray, BigInt(100).toByteArray)
     val req1 = SubmitOrderReq(Some(order1))
-    askAndWait(ordermanager, req1)
+    askAndWait(ordermanager, req1) match {
+      case SubmitOrderRes(e, _) ⇒ e.isOk should be(true)
+      case _                    ⇒ true should be(false)
+    }
 
     val order2 = Order("order1", eth, lrc, vite, BigInt(1).toByteArray, BigInt(1000).toByteArray, BigInt(100).toByteArray)
     val req2 = SubmitOrderReq(Some(order2))
-    askAndWait(ordermanager, req2)
+    askAndWait(ordermanager, req2) match {
+      case SubmitOrderRes(e, _) ⇒ e.isOk should be(true)
+      case _                    ⇒ true should be(false)
+    }
   }
 
 }
