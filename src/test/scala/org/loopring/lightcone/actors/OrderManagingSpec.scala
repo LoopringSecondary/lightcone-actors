@@ -46,10 +46,9 @@ class OrderManagingSpec extends FlatSpec with Matchers {
     val req = SubmitOrderReq(Some(order))
 
     askAndWait(ordermanager, req) match {
-      case SubmitOrderRes(e, o) =>
+      case SubmitOrderRes(e, _) ⇒
         info(e.toString)
-        info(o.toString)
-      case _ =>
+      case _ ⇒
         info("err")
     }
 

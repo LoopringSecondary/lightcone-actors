@@ -45,11 +45,14 @@ class OrderManagingActor(
   // todo: 如何初始化？在本actor初始化订单数据还是在其他actor获取所有数据后批量发送过来？？？
 
   // todo: 返回到上一层调用时status到error的映射关系
-  def receive() = LoggingReceive {
+  def receive(): Receive = {
     case SubmitOrderReq(orderOpt) ⇒
       assert(orderOpt.nonEmpty)
       val reqOrder = orderOpt.get.toPojo
       assert(reqOrder.outstanding.amountS > 0)
+
+      // 必须重新赋值, 否则map找不到actor,数据会发到deadLetter
+      val sendT = sender()
 
       for {
         _ ← Future.sequence(Seq(
@@ -61,7 +64,7 @@ class OrderManagingActor(
         _ = if (success) tellMarketManager(corder)
         resOrder = corder.toProto()
         errCode = orderStatus2ErrorCode(resOrder.status)
-      } yield sender() ! SubmitOrderRes(errCode, Some(resOrder))
+      } yield sendT ! SubmitOrderRes(errCode)
 
     case CancelOrderReq(id, _) ⇒
       val errorCode = manager.cancelOrder(id) match {

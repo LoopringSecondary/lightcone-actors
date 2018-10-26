@@ -27,24 +27,25 @@ import scala.concurrent.duration._
 
 package object helper {
 
+  val eth = "ETH"
+  val lrc = "LRC"
+  val vite = "VITE"
+
+  implicit val timeout = Timeout(5 seconds)
   implicit val system = ActorSystem()
   implicit val ec = system.dispatcher
-  implicit val timeout = Timeout(5 seconds)
   implicit val timeProvider = new SystemTimeProvider()
   implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
   tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 1, eth → 2000, vite -> 0.5))
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
-  val eth = "ETH"
-  val lrc = "LRC"
-  val vite = "VITE"
+  Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+  Routers.marketManagingActors = Map(
+    tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+  )
 
   def prepare(owner: String) = {
-    Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-    Routers.marketManagingActors = Map(
-      tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
-    )
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 
@@ -54,17 +55,17 @@ package object helper {
     OnChainAccounts.map += req.address -> map
   }
 
-  def newMarketManager(tokenS: String, tokenB: String) = {
+  def newMarketManager(tokenS: String, tokenB: String)(implicit dustOrderEvaluator: DustOrderEvaluator) = {
     val marketId = MarketId(tokenS, tokenB)
     val marketConfig = MarketManagerConfig(0, 0)
     val pendingRingPool = new PendingRingPoolImpl()
     val incomeEvaluator = new RingIncomeEstimatorImpl(10)
     val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
-    val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustEvaluator)
+    val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustOrderEvaluator)
     new MarketManagingActor(marketManager)
   }
 
-  def askAndWait(actor: ActorRef, req: Any) = {
+  def askAndWait(actor: ActorRef, req: Any)(implicit timeout: Timeout) = {
     Await.result(actor ? req, timeout.duration)
   }
 }
