@@ -36,19 +36,23 @@ class OrderManagingSpec extends FlatSpec with Matchers {
     val viteaccount = UpdateBalanceAndAllowanceReq(user1, vite,
       Some(BalanceAndAllowance(bigIntToByteString(10000), bigIntToByteString(10000))))
 
-    ethUpdateBalanceAndAllowance(lrcaccount)
-    ethUpdateBalanceAndAllowance(ethaccount)
-    ethUpdateBalanceAndAllowance(viteaccount)
+    updateAccountOnChain(lrcaccount)
+    updateAccountOnChain(ethaccount)
+    updateAccountOnChain(viteaccount)
 
     // 下单
-    val ordermanager = newOrderManagerActor(user1)
+    val ordermanager = prepare(user1)
     val order = Order("order1", lrc, eth, vite, BigInt(100).toByteArray, BigInt(100).toByteArray, BigInt(100).toByteArray)
     val req = SubmitOrderReq(Some(order))
 
-    val resp = askAndResp(ordermanager, req)
+    askAndWait(ordermanager, req) match {
+      case SubmitOrderRes(e, o) =>
+        info(e.toString)
+        info(o.toString)
+      case _ =>
+        info("err")
+    }
 
-    info(resp.toString)
-    resp should be(1)
   }
 
 }

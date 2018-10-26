@@ -40,7 +40,7 @@ class MarketManagingActor(
   override def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
-        case OrderStatus.NEW ⇒
+        case OrderStatus.PENDING ⇒
           val res = manager.submitOrder(order.toPojo)
           val rings = res.rings map (_.toProto)
           if (rings.nonEmpty) {

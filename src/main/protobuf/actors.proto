@@ -72,10 +72,11 @@ enum ErrorCode {
   OK = 0;
   ORDER_NOT_EXIST = 1;
   ORDER_INVALID_AMOUNT_S = 2;
-  ACCOUNT_INSUFFICIENT = 3;
-  TOKEN_NOT_EXIST = 4;
-  TOO_MANY_ORDERS = 5;
-  TOO_MANY_ORDERS_FAILED = 6;
+  LOW_BALANCE = 3;
+  LOW_FEE_BALANCE = 4;
+  TOKEN_NOT_EXIST = 5;
+  TOO_MANY_ORDERS = 6;
+  TOO_MANY_FAILED_MATCHES = 7;
 }
 
 message BalanceAndAllowance {
@@ -107,6 +108,7 @@ message SubmitOrderRes {
 // 注意: cancelOrderReq 可能包含用户软取消,在orderManagerState软取消后用户链上数据继续变更不影响最终结果
 message CancelOrderReq {
   string id = 1;
+  bool hard_cancel = 2; // 默认软取消
 }
 
 message CancelOrderRes {

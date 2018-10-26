@@ -48,55 +48,56 @@ class OrderManagingActor(
   def receive() = LoggingReceive {
     case SubmitOrderReq(orderOpt) ⇒
       assert(orderOpt.nonEmpty)
-      val order = orderOpt.get.toPojo
-      assert(order.outstanding.amountS > 0)
+      val reqOrder = orderOpt.get.toPojo
+      assert(reqOrder.outstanding.amountS > 0)
 
       for {
-        _ ← Future.sequence(Seq( // run in parallel
-          getTokenManagerAsFuture(order.tokenS),
-          getTokenManagerAsFuture(order.tokenFee)
+        _ ← Future.sequence(Seq(
+          getTokenManagerAsFuture(reqOrder.tokenS),
+          getTokenManagerAsFuture(reqOrder.tokenFee)
         ))
-        success = manager.submitOrder(order)
-        updatedOrders = if (success) updatedOrderReceiver.getOrders() else Seq.empty
-      } yield updatedOrders.map(tellMarketManager)
+        success = manager.submitOrder(reqOrder)
+        corder = updatedOrderReceiver.getOrder()
+        _ = if (success) tellMarketManager(corder)
+        resOrder = corder.toProto()
+        errCode = orderStatus2ErrorCode(resOrder.status)
+      } yield sender() ! SubmitOrderRes(errCode, Some(resOrder))
 
-    case CancelOrderReq(id) ⇒ manager.cancelOrder(id) match {
-      case true ⇒ for {
-        updatedOrders ← Future(updatedOrderReceiver.getOrders())
-        _ ← Future(updatedOrders.map(tellMarketManager))
-      } yield CancelOrderRes(ErrorCode.OK)
-      case false ⇒ CancelOrderRes(ErrorCode.ORDER_NOT_EXIST)
-    }
+    case CancelOrderReq(id, _) ⇒
+      val errorCode = manager.cancelOrder(id) match {
+        case true ⇒
+          tellMarketManager(updatedOrderReceiver.getOrder)
+          ErrorCode.OK
+        case false ⇒
+          ErrorCode.ORDER_NOT_EXIST
+      }
+      sender() ! CancelOrderRes(errorCode)
 
     // amountS为剩余量
-    case UpdateFilledAmountReq(id, amountS) ⇒ manager.adjustOrder(id, amountS) match {
-      case true ⇒ for {
-        updatedOrders ← Future(updatedOrderReceiver.getOrders())
-        _ ← Future(updatedOrders.map(tellMarketManager))
-      } yield UpdateFilledAmountRes(ErrorCode.OK)
-      case false ⇒ UpdateFilledAmountRes(ErrorCode.ORDER_NOT_EXIST)
-    }
+    case UpdateFilledAmountReq(id, amountS) ⇒
+      val errorCode = manager.adjustOrder(id, amountS) match {
+        case true ⇒
+          updatedOrderReceiver.getOrders().map(tellMarketManager)
+          ErrorCode.OK
+        case false ⇒
+          ErrorCode.ORDER_NOT_EXIST
+      }
+      sender() ! UpdateFilledAmountRes(errorCode)
 
     // TODO: 这里不应该是一个req, 返回值只用于测试
     case UpdateBalanceAndAllowanceReq(address, token, accountOpt) ⇒
-      if (manager.hasTokenManager(token)) {
+      val errorCode = if (manager.hasTokenManager(token)) {
         assert(accountOpt.nonEmpty)
         val account = accountOpt.get
-        assert(account.balance > 0 && account.allowance > 0)
-
         val tokenManager = manager.getTokenManager(token)
         tokenManager.init(account.balance, account.allowance)
-
-        val updatedOrders = updatedOrderReceiver.getOrders()
-        for {
-          _ ← Future(updatedOrders.map(tellMarketManager))
-        } yield {
-          val tokenBalance = tokenManager.getTokenBalance()
-          UpdateBalanceAndAllowanceRes(ErrorCode.OK, Some(BalanceAndAllowance(tokenBalance.balance, tokenBalance.allowance)))
-        }
+        updatedOrderReceiver.getOrders().map(tellMarketManager)
+        ErrorCode.OK
       } else {
-        Future(UpdateBalanceAndAllowanceRes(ErrorCode.TOKEN_NOT_EXIST))
+        ErrorCode.TOKEN_NOT_EXIST
       }
+      sender() ! UpdateBalanceAndAllowanceRes(errorCode)
+
   }
 
   private def getTokenManagerAsFuture(token: Address): Future[TokenManager] = {
@@ -119,6 +120,14 @@ class OrderManagingActor(
     val market = Routers.marketManagingActors.get(marketId).get
     market ! SubmitOrderReq(Some(order.toProto()))
   }
+
+  private def orderStatus2ErrorCode(status: OrderStatus) = status match {
+    case OrderStatus.CANCELLED_LOW_BALANCE ⇒ ErrorCode.LOW_BALANCE
+    case OrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ ErrorCode.LOW_FEE_BALANCE
+    case OrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ ErrorCode.TOO_MANY_ORDERS
+    case OrderStatus.CANCELLED_TOO_MANY_FAILED_SETTLEMENTS ⇒ ErrorCode.TOO_MANY_FAILED_MATCHES
+    case _ ⇒ ErrorCode.OK
+  }
 }
 
 class UpdatedOrderReceiver {
@@ -128,8 +137,16 @@ class UpdatedOrderReceiver {
     receivedOrders :+= order
   }
 
-  def getOrders(): Seq[COrder] = {
+  def getOrders(): Seq[COrder] = this.synchronized {
+    assert(receivedOrders.size > 0)
     val ret = receivedOrders
+    receivedOrders = Seq.empty
+    ret
+  }
+
+  def getOrder(): COrder = this.synchronized {
+    assert(receivedOrders.size == 1)
+    val ret = receivedOrders.head
     receivedOrders = Seq.empty
     ret
   }

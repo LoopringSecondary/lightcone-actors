@@ -16,43 +16,39 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.actor._
 import akka.util.Timeout
 import akka.pattern.ask
-import java.util.concurrent.ForkJoinPool
 
 import org.loopring.lightcone.core._
 
-import scala.concurrent.{ Await, ExecutionContext }
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 package object helper {
+
+  implicit val system = ActorSystem()
+  implicit val ec = system.dispatcher
+  implicit val timeout = Timeout(5 seconds)
+  implicit val timeProvider = new SystemTimeProvider()
+  implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
+  tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 1, eth → 2000, vite -> 0.5))
+  tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
+  implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
   val eth = "ETH"
   val lrc = "LRC"
   val vite = "VITE"
 
-  implicit val system = ActorSystem()
-  implicit val context = ExecutionContext.fromExecutor(ForkJoinPool.commonPool())
-  implicit val timeout = Timeout(20 seconds)
-  implicit val timeProvider = new SystemTimeProvider()
-
-  implicit val tokenValueEstimator = new TokenValueEstimatorImpl()
-  tokenValueEstimator.setMarketCaps(Map[Address, Double](lrc → 1, eth → 2000, vite -> 0.5))
-  tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
-
-  implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
-
-  Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-  Routers.marketManagingActors = Map(
-    tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
-  )
-
-  def newOrderManagerActor(owner: String) = {
+  def prepare(owner: String) = {
+    Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+    Routers.marketManagingActors = Map(
+      tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+    )
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 
-  def ethUpdateBalanceAndAllowance(req: UpdateBalanceAndAllowanceReq) = {
+  def updateAccountOnChain(req: UpdateBalanceAndAllowanceReq) = {
     var map = OnChainAccounts.map.getOrElse(req.address, Map.empty[String, BalanceAndAllowance])
     map += req.token -> req.getBalanceAndAllowance
     OnChainAccounts.map += req.address -> map
@@ -68,8 +64,7 @@ package object helper {
     new MarketManagingActor(marketManager)
   }
 
-  def askAndResp(actor: ActorRef, req: Any) = {
-    val resFuture = actor ? req
-    Await.result(resFuture, timeout.duration)
+  def askAndWait(actor: ActorRef, req: Any) = {
+    Await.result(actor ? req, timeout.duration)
   }
 }
