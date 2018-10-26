@@ -17,7 +17,6 @@
 package org.loopring.lightcone.actors.base
 
 import akka.actor._
-
 import scala.concurrent.Future
 import scala.concurrent.duration._
 

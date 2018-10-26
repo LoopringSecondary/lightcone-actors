@@ -19,11 +19,27 @@ package org.loopring.lightcone.actors
 import akka.actor.ActorRef
 import org.loopring.lightcone.core.MarketId
 
-trait Routers {
+//todo:simple routers for test
+class SimpleRoutersImpl extends Routers {
 
-  def getOrderManagingActor(owner: Address): Option[ActorRef]
-  def getMarketManagingActor(marketId: MarketId): Option[ActorRef]
-  def getEthAccessActor: ActorRef
-  def getRingSubmitterActor: ActorRef
+  var orderManagerActors = Map[Address, ActorRef]()
+
+  var marketManagingActors = Map[String, ActorRef]()
+
+  var ethAccessActor = ActorRef.noSender
+
+  var ringSubmitterActor = ActorRef.noSender
+
+  def getOrderManagingActor(owner: Address): Option[ActorRef] = {
+    orderManagerActors.get(owner)
+  }
+
+  def getMarketManagingActor(marketId: MarketId): Option[ActorRef] = {
+    marketManagingActors.get(tokensToMarketHash(marketId.primary, marketId.secondary))
+  }
+
+  def getEthAccessActor: ActorRef = ethAccessActor
+
+  def getRingSubmitterActor: ActorRef = ringSubmitterActor
 
 }

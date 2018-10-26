@@ -18,12 +18,11 @@ package org.loopring.lightcone.actors
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import akka.actor.{ ActorLogging, ActorSystem, Props }
+import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.actors.base.{ Job, RepeatedJobActor }
+import org.loopring.lightcone.actors.base._
 import org.scalatest._
-
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
 
@@ -32,6 +31,7 @@ class RepeatedJobSpec extends FlatSpec with Matchers {
   val system = ActorSystem()
   implicit val ec = system.dispatcher
   implicit val timeout = new Timeout(1 seconds)
+
   class JobActor(jobs: Job*)(
       implicit
       ec: ExecutionContext,
@@ -51,22 +51,26 @@ class RepeatedJobSpec extends FlatSpec with Matchers {
     var i2 = new AtomicInteger()
 
     def test1(): Future[Unit] = for {
-      _ ← Future.successful()
+      _ ← Future.successful(Unit)
     } yield {
       info("repeatedJob.test1 time:" + " i1:" + i1.getAndIncrement())
     }
 
     def test2(): Future[Unit] = for {
-      _ ← Future.successful()
+      _ ← Future.successful(Unit)
     } yield info("repeatedJob.test2 time:" + " i2:" + i2.getAndIncrement())
 
-    system.actorOf(Props(new JobActor(
+    val actor = system.actorOf(Props(new JobActor(
       Job(id = 1, name = "test1", scheduleDelay = 1000, callMethod = test1 _),
       Job(id = 2, name = "test2", scheduleDelay = 2000, callMethod = test2 _)
     )))
+
     Thread.sleep(4000)
+
     assert(i1.get() == 4)
     assert(i2.get() == 2)
+
+    actor ! PoisonPill
   }
 
 }

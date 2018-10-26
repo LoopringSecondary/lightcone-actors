@@ -112,7 +112,9 @@ message CancelOrderReq {
 }
 
 message CancelOrderRes {
-  ErrorCode error = 1;
+  string id = 1;
+  bool hard_cancel = 2; // 默认软取消
+  ErrorCode error = 3;
 }
 
 message UpdateFilledAmountReq {

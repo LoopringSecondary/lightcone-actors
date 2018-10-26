@@ -16,11 +16,11 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor._
 import akka.util.Timeout
-import org.loopring.lightcone.core.{ Address, DustOrderEvaluatorImpl, MarketId, MarketManagerConfig, MarketManagerImpl, OrderPool, PendingRingPoolImpl, RingIncomeEstimatorImpl, SimpleRingMatcher, SystemTimeProvider, TokenValueEstimatorImpl }
-import org.scalatest._
 import akka.pattern.ask
+import org.loopring.lightcone.core._
+import org.scalatest._
 import scala.concurrent.duration._
 
 class MarketManagerSpec extends FlatSpec with Matchers {

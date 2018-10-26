@@ -20,7 +20,6 @@ import akka.actor._
 import akka.util.Timeout
 import akka.pattern.ask
 import org.loopring.lightcone.core._
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
