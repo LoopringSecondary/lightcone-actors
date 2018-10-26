@@ -16,18 +16,19 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core._
 import akka.actor._
-import akka.pattern.ask
 import akka.event.LoggingReceive
 import akka.util.Timeout
 
-import scala.concurrent.{ ExecutionContext, Future }
+import org.loopring.lightcone.core._
+
+import scala.concurrent.ExecutionContext
 
 class MarketManagingActor(
     manager: MarketManager
 )(
     implicit
+    routes: Routers,
     ec: ExecutionContext,
     timeout: Timeout
 )
@@ -35,12 +36,12 @@ class MarketManagingActor(
   with ActorLogging {
   var latestGasPrice = 0l
 
-  val ringSubmitterActor = Routers.ringSubmitterActor
+  val ringSubmitterActor = routes.getRingSubmitterActor
 
   override def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
-        case OrderStatus.NEW ⇒
+        case OrderStatus.PENDING ⇒
           val res = manager.submitOrder(order.toPojo)
           val rings = res.rings map (_.toProto)
           if (rings.nonEmpty) {

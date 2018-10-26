@@ -27,13 +27,14 @@ class RingSubmitterActor(
     submitter: Address
 )(
     implicit
+    routers: Routers,
     ec: ExecutionContext,
     timeout: Timeout
 )
   extends Actor
   with ActorLogging {
 
-  val ethereumAccessActor = Routers.ethAccessActor
+  val ethereumAccessActor = routers.getEthAccessActor
 
   override def receive: Receive = {
     case req: SubmitRingReq ⇒

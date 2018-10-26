@@ -21,6 +21,10 @@ import akka.util.Timeout
 
 import scala.concurrent.ExecutionContext
 
+object OnChainAccounts {
+  var map = Map[Address, Map[String, BalanceAndAllowance]]()
+}
+
 class EthAccessSpecActor()(
     implicit
     ec: ExecutionContext,
@@ -28,17 +32,15 @@ class EthAccessSpecActor()(
 )
   extends Actor {
 
-  var map = Map[Address, Map[String, BalanceAndAllowance]]()
-
   override def receive: Receive = {
     case req: GetBalanceAndAllowancesReq ⇒
-      val balanceAndAllowance = map.get(req.address) map {
+      val balanceAndAllowance = OnChainAccounts.map.get(req.address) map {
         tokens ⇒
           tokens map {
             token ⇒ (token._1, token._2)
           }
       }
-      sender ! GetBalanceAndAllowancesResp(
+      sender ! GetBalanceAndAllowancesRes(
         address = req.address,
         balanceAndAllowanceMap = balanceAndAllowance.get
       )

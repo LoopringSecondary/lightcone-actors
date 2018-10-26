@@ -56,7 +56,7 @@ class OrderFillHistoryActor()(
         }
       } yield {
         if (updated.outstanding.amountS <= 0) {
-          sender ! SubmitOrderResp(ErrorCode.ORDER_INVALID_AMOUNT_S, None)
+          sender ! SubmitOrderRes(ErrorCode.ORDER_INVALID_AMOUNT_S, None)
         } else {
           orderManagignActor forward SubmitOrderReq(Some(updated.toProto))
         }
@@ -65,7 +65,7 @@ class OrderFillHistoryActor()(
 
   def getFilledAmountAsFuture(orderIds: Seq[String]): Future[Map[String, BigInt]] = {
     (ethereumAccessActor ? GetFilledAmountReq(orderIds))
-      .mapTo[GetFilledAmountResp]
+      .mapTo[GetFilledAmountRes]
       .map(_.filledAmountSMap)
   }
 }
