@@ -19,10 +19,9 @@ package org.loopring.lightcone.actors
 import akka.actor._
 import akka.util.Timeout
 import akka.pattern.ask
-
 import org.loopring.lightcone.core._
 
-import scala.concurrent.Await
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
 package object helper {
@@ -40,12 +39,11 @@ package object helper {
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
-  Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-  Routers.marketManagingActors = Map(
-    tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
-  )
-
   def prepare(owner: String) = {
+    Routers.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+    Routers.marketManagingActors = Map(
+      tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+    )
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 

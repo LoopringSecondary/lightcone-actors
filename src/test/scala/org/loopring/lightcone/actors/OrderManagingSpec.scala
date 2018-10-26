@@ -42,16 +42,14 @@ class OrderManagingSpec extends FlatSpec with Matchers {
 
     // 下单
     val ordermanager = prepare(user1)
-    val order = Order("order1", lrc, eth, vite, BigInt(100).toByteArray, BigInt(100).toByteArray, BigInt(100).toByteArray)
-    val req = SubmitOrderReq(Some(order))
 
-    askAndWait(ordermanager, req) match {
-      case SubmitOrderRes(e, _) ⇒
-        info(e.toString)
-      case _ ⇒
-        info("err")
-    }
+    val order1 = Order("order1", lrc, eth, vite, BigInt(1000).toByteArray, BigInt(1).toByteArray, BigInt(100).toByteArray)
+    val req1 = SubmitOrderReq(Some(order1))
+    askAndWait(ordermanager, req1)
 
+    val order2 = Order("order1", eth, lrc, vite, BigInt(1).toByteArray, BigInt(1000).toByteArray, BigInt(100).toByteArray)
+    val req2 = SubmitOrderReq(Some(order2))
+    askAndWait(ordermanager, req2)
   }
 
 }
