@@ -18,7 +18,6 @@ package org.loopring.lightcone.actors
 
 import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout
-
 import scala.concurrent.ExecutionContext
 
 object OnChainAccounts {

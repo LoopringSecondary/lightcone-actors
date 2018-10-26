@@ -20,7 +20,6 @@ import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core.MarketManager
-
 import scala.concurrent.ExecutionContext
 
 class RingSubmitterActor(

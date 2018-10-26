@@ -19,9 +19,7 @@ package org.loopring.lightcone.actors
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-
 import org.loopring.lightcone.core._
-
 import scala.concurrent.ExecutionContext
 
 class MarketManagingActor(
