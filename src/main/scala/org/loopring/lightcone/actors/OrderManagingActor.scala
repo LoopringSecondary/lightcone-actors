@@ -20,9 +20,7 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
-
 import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
-
 import scala.concurrent.{ ExecutionContext, Future }
 
 class OrderManagingActor(
@@ -54,7 +52,7 @@ class OrderManagingActor(
       assert(reqOrder.outstanding.amountS > 0)
 
       // 必须重新赋值, 否则map找不到actor,数据会发到deadLetter
-      val sendT = sender()
+      val _sender = sender()
 
       for {
         _ ← Future.sequence(Seq(
@@ -62,28 +60,32 @@ class OrderManagingActor(
           getTokenManagerAsFuture(reqOrder.tokenFee)
         ))
         success = manager.submitOrder(reqOrder)
-        corder = updatedOrderReceiver.getOrder()
-        _ = if (success) tellMarketManager(corder)
-        resOrder = corder.toProto()
-        errCode = orderStatus2ErrorCode(resOrder.status)
-      } yield sendT ! SubmitOrderRes(errCode)
+        order = updatedOrderReceiver.takeOrders.head
+        _ = if (success) tellMarketManager(order)
+        pOrder = order.toProto
+        errCode: ErrorCode = pOrder.status
+      } yield {
+        _sender ! SubmitOrderRes(errCode, Some(pOrder))
+      }
 
-    case CancelOrderReq(id, _) ⇒
+    case CancelOrderReq(id, hardCancel) ⇒
       val errorCode = manager.cancelOrder(id) match {
         case true ⇒
-          tellMarketManager(updatedOrderReceiver.getOrder)
+          updatedOrderReceiver.takeOrders.map(tellMarketManager)
           ErrorCode.OK
+
         case false ⇒
           ErrorCode.ORDER_NOT_EXIST
       }
-      sender() ! CancelOrderRes(errorCode)
+      sender() ! CancelOrderRes(id, hardCancel, errorCode)
 
     // amountS为剩余量
     case UpdateFilledAmountReq(id, amountS) ⇒
       val errorCode = manager.adjustOrder(id, amountS) match {
         case true ⇒
-          updatedOrderReceiver.getOrders().map(tellMarketManager)
+          updatedOrderReceiver.takeOrders.map(tellMarketManager)
           ErrorCode.OK
+
         case false ⇒
           ErrorCode.ORDER_NOT_EXIST
       }
@@ -96,7 +98,7 @@ class OrderManagingActor(
         val account = accountOpt.get
         val tokenManager = manager.getTokenManager(token)
         tokenManager.init(account.balance, account.allowance)
-        updatedOrderReceiver.getOrders().map(tellMarketManager)
+        updatedOrderReceiver.takeOrders.map(tellMarketManager)
         ErrorCode.OK
       } else {
         ErrorCode.TOKEN_NOT_EXIST
@@ -127,7 +129,7 @@ class OrderManagingActor(
     market ! SubmitOrderReq(Some(order.toProto()))
   }
 
-  private def orderStatus2ErrorCode(status: OrderStatus) = status match {
+  implicit private def orderStatus2ErrorCode(status: OrderStatus): ErrorCode = status match {
     case OrderStatus.CANCELLED_LOW_BALANCE ⇒ ErrorCode.LOW_BALANCE
     case OrderStatus.CANCELLED_LOW_FEE_BALANCE ⇒ ErrorCode.LOW_FEE_BALANCE
     case OrderStatus.CANCELLED_TOO_MANY_ORDERS ⇒ ErrorCode.TOO_MANY_ORDERS
@@ -137,24 +139,16 @@ class OrderManagingActor(
 }
 
 class UpdatedOrderReceiver {
-  var receivedOrders = Seq.empty[COrder]
+  private var receivedOrders = Seq.empty[COrder]
 
   def onUpdatedOrder(order: COrder) = {
     receivedOrders :+= order
   }
 
-  def getOrders(): Seq[COrder] = this.synchronized {
-    assert(receivedOrders.size > 0)
+  def takeOrders(): Seq[COrder] = this.synchronized {
+    // assert(receivedOrders.size > 0)
     val ret = receivedOrders
     receivedOrders = Seq.empty
     ret
   }
-
-  def getOrder(): COrder = this.synchronized {
-    assert(receivedOrders.size == 1)
-    val ret = receivedOrders.head
-    receivedOrders = Seq.empty
-    ret
-  }
-
 }
