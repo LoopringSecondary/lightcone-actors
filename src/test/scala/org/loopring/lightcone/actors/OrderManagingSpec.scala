@@ -28,13 +28,13 @@ class OrderManagingSpec extends FlatSpec with Matchers {
 
     // 充值到链上
     val lrcaccount = UpdateBalanceAndAllowanceReq(user1, lrc,
-      Some(BalanceAndAllowance(bigIntToByteString(10000), bigIntToByteString(10000))))
+      Some(BalanceAndAllowance(10000, 10000)))
 
     val ethaccount = UpdateBalanceAndAllowanceReq(user1, eth,
-      Some(BalanceAndAllowance(bigIntToByteString(10), bigIntToByteString(10))))
+      Some(BalanceAndAllowance(10, 10)))
 
     val viteaccount = UpdateBalanceAndAllowanceReq(user1, vite,
-      Some(BalanceAndAllowance(bigIntToByteString(10000), bigIntToByteString(10000))))
+      Some(BalanceAndAllowance(10000, 10000)))
 
     updateAccountOnChain(lrcaccount)
     updateAccountOnChain(ethaccount)
@@ -43,14 +43,14 @@ class OrderManagingSpec extends FlatSpec with Matchers {
     // 下单
     val ordermanager = prepare(user1)
 
-    val order1 = Order("order1", lrc, eth, vite, BigInt(1000).toByteArray, BigInt(1).toByteArray, BigInt(100).toByteArray)
+    val order1 = Order("order1", lrc, eth, vite, 1000, 1, 100)
     val req1 = SubmitOrderReq(Some(order1))
     askAndWait(ordermanager, req1) match {
       case SubmitOrderRes(e, _) ⇒ e.isOk should be(true)
       case _                    ⇒ true should be(false)
     }
 
-    val order2 = Order("order1", eth, lrc, vite, BigInt(1).toByteArray, BigInt(1000).toByteArray, BigInt(100).toByteArray)
+    val order2 = Order("order1", eth, lrc, vite, 1, 1000, 100)
     val req2 = SubmitOrderReq(Some(order2))
     askAndWait(ordermanager, req2) match {
       case SubmitOrderRes(e, _) ⇒ e.isOk should be(true)

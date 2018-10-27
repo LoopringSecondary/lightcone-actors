@@ -19,7 +19,9 @@ package org.loopring.lightcone.actors
 import akka.actor._
 import akka.util.Timeout
 import akka.pattern.ask
+import com.google.protobuf.ByteString
 import org.loopring.lightcone.core._
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -66,4 +68,6 @@ package object helper {
   def askAndWait(actor: ActorRef, req: Any)(implicit timeout: Timeout) = {
     Await.result(actor ? req, timeout.duration)
   }
+
+  implicit def int2byteString(src: Int): ByteString = bigIntToByteString(src)
 }
