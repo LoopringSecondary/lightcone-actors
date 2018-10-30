@@ -46,6 +46,7 @@ package object helper {
     routes.marketManagingActors = Map(
       tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
     )
+    routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 
