@@ -60,7 +60,7 @@ class MarketManagerSpec extends FlatSpec with Matchers {
       amountFee = BigInt(10).toByteArray,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      matchable = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
     )
     val maker2 = Order(
       id = "maker2",
@@ -72,7 +72,7 @@ class MarketManagerSpec extends FlatSpec with Matchers {
       amountFee = BigInt(10).toByteArray,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      matchable = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
     )
     val taker = Order(
       id = "taker1",
@@ -84,7 +84,7 @@ class MarketManagerSpec extends FlatSpec with Matchers {
       amountFee = BigInt(10).toByteArray,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      matchable = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
     )
     val delMarker1 = maker1.copy(status = OrderStatus.CANCELLED_BY_USER)
     marketManagerActor ! SubmitOrderReq(Some(maker1))
