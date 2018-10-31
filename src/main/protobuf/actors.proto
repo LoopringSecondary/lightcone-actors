@@ -156,3 +156,16 @@ message SendRawTransaction {
 message SubmitRingReq {
   repeated Ring rings = 1;
 }
+
+message DepthEvent {
+  string order_id = 1;
+  string token_s = 2;
+  string token_b = 3;
+  bytes amount_s = 4;
+  bytes amount_b = 5;
+  bytes matchable_amount_s = 6;
+}
+
+message DepthEventList {
+  repeated DepthEvent events = 1;
+}
