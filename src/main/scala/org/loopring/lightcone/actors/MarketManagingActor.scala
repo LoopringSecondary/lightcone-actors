@@ -56,6 +56,9 @@ class MarketManagingActor(
       }
       latestGasPrice = updatedGasPrce.gasPrice
 
+    case req: RingExecutedRes ⇒
+      val ringOpt = req.ring.map(_.toPojo)
+      ringOpt.foreach(manager.deletePendingRing)
   }
 
 }

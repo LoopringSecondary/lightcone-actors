@@ -158,8 +158,15 @@ package object actors {
 
   implicit class RichCRing(ring: CRing) {
     def toProto(): Ring = Ring(
-      Some(ring.maker.toProto()),
-      Some(ring.taker.toProto())
+      Some(ring.maker.toProto),
+      Some(ring.taker.toProto)
+    )
+  }
+
+  implicit class RichRing(ring: Ring) {
+    def toPojo(): CRing = CRing(
+      ring.getMaker.toPojo,
+      ring.getTaker.toPojo
     )
   }
 }

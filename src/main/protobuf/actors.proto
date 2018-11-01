@@ -156,3 +156,17 @@ message SendRawTransaction {
 message SubmitRingReq {
   repeated Ring rings = 1;
 }
+
+enum ExecutedStatus {
+  EXECUTED_STATUS_UNKNOW = 0;
+  EXECUTED_STATUS_FAILED = 1;
+  EXECUTED_STATUS_SUCCESS = 2;
+}
+
+message RingExecutedRes {
+  Ring ring = 1;
+  string tx_hash = 2;
+  ExecutedStatus status = 3;
+  bytes used_gas = 4;
+  int64 block_number = 5;
+}
