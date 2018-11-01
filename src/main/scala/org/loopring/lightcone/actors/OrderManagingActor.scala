@@ -24,10 +24,10 @@ import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import scala.concurrent.{ ExecutionContext, Future }
 
 class OrderManagingActor(
-    owner: Address
+    owner: Address,
+    orderPool: OrderPool[COrder]
 )(
     implicit
-    orderPool: OrderPool[COrder],
     dustOrderEvaluator: DustOrderEvaluator,
     routes: Routers,
     ec: ExecutionContext,
@@ -40,7 +40,7 @@ class OrderManagingActor(
 
   val updatedOrderReceiver = new UpdatedOrderReceiver()
   orderPool.addCallback(updatedOrderReceiver.onUpdatedOrder)
-  val manager: OrderManager = OrderManager.default(10000)
+  val manager: OrderManager = OrderManager.default(10000)(orderPool)
 
   // todo: 如何初始化？在本actor初始化订单数据还是在其他actor获取所有数据后批量发送过来？？？
 
@@ -111,7 +111,7 @@ class OrderManagingActor(
     if (manager.hasTokenManager(token)) {
       Future.successful(manager.getTokenManager(token))
     } else {
-      val tm = manager.addTokenManager(new TokenManager(token, 10000))
+      val tm = manager.addTokenManager(new TokenManager(token, 10000)(orderPool, dustOrderEvaluator))
       (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, Seq(token)))
         .mapTo[GetBalanceAndAllowancesRes].map(_.balanceAndAllowanceMap(token)).map {
           ba ⇒

@@ -18,14 +18,19 @@ package org.loopring.lightcone.actors
 
 import akka.actor._
 import akka.event.LoggingReceive
-import org.loopring.lightcone.core.{DepthOrder, DepthView, MarketId, OrderPool, Rational}
+import akka.util.Timeout
+import org.loopring.lightcone.core._
+
+import scala.concurrent.ExecutionContext
 
 class DepthViewActor(
     marketId: MarketId,
-)(
+    orderPool: OrderPool[DepthOrder],
+    depthManagers: Map[Double, DepthView], // 同一市场不同精读
+                    )(
   implicit
-  orderPool: OrderPool[DepthOrder],
-  depthManagers: Map[Double, DepthView] // 同一市场不同精读
+  ec: ExecutionContext,
+  timeout: Timeout
 ) extends Actor with ActorLogging {
 
   var latestMatchPrice = 0d
