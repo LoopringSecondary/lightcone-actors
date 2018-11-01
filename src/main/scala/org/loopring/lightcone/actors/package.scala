@@ -24,7 +24,10 @@ import org.loopring.lightcone.core.{
   OrderState ⇒ COrderState,
   OrderStatus ⇒ COrderStatus,
   ExpectedFill ⇒ CExpectedFill,
-  Ring ⇒ CRing
+  Ring ⇒ CRing,
+  DepthOrder => CDepthEvent,
+  DepthEntry => CDepthEntry,
+  Rational,
 }
 
 package object actors {
@@ -160,6 +163,24 @@ package object actors {
     def toProto(): Ring = Ring(
       Some(ring.maker.toProto()),
       Some(ring.taker.toProto())
+    )
+  }
+
+  implicit class RichDepthEvent(depth: DepthEvent) {
+    def toPojo() = CDepthEvent(
+      depth.orderId,
+      depth.tokenS,
+      depth.tokenB,
+      Rational(depth.amountS, depth.amountB),
+      depth.matchableAmountS
+    )
+  }
+
+  implicit class RichDepthEntry(entry: CDepthEntry) {
+
+    def toProto() = DepthRes.Entry(
+      entry.price,
+      entry.amountS
     )
   }
 }
