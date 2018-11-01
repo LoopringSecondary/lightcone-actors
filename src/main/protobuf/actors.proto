@@ -169,3 +169,26 @@ message DepthEvent {
 message DepthEventList {
   repeated DepthEvent events = 1;
 }
+
+// todo rpc层路由到某个market对应的actor
+message DepthReq {
+  double granularity = 1;
+  int32 length = 2;
+}
+
+message DepthRes {
+  message Entry {
+    double price = 1;
+    bytes amount = 2;
+  }
+
+  repeated Entry asks = 1;
+  repeated Entry bids = 2;
+
+}
+
+// todo eth层路由到某个market对应的actor
+message LatestMatchPriceEvent {
+  bytes amountS = 1;
+  bytes amountB = 2;
+}

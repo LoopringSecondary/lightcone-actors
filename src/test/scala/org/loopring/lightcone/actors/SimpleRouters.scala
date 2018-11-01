@@ -26,6 +26,8 @@ class SimpleRoutersImpl extends Routers {
 
   var marketManagingActors = Map[String, ActorRef]()
 
+  var depthViewActors = Map[String, ActorRef]()
+
   var ethAccessActor = ActorRef.noSender
 
   var ringSubmitterActor = ActorRef.noSender
@@ -41,5 +43,9 @@ class SimpleRoutersImpl extends Routers {
   def getEthAccessActor: ActorRef = ethAccessActor
 
   def getRingSubmitterActor: ActorRef = ringSubmitterActor
+
+  def getDepthActor(marketId: MarketId): Option[ActorRef] = {
+    depthViewActors.get(tokensToMarketHash(marketId.primary, marketId.secondary))
+  }
 
 }

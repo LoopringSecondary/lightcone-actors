@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core.{Order ⇒ COrder,_}
+import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import scala.concurrent.ExecutionContext
 
 class MarketManagingActor(
@@ -60,8 +60,10 @@ class MarketManagingActor(
                 order.tokenB,
                 order.amountS,
                 order.amountB,
-                BigInt(0))
-            )))
+                BigInt(0)
+              )
+            )
+          ))
       }
 
     case updatedGasPrce: UpdatedGasPrice ⇒
