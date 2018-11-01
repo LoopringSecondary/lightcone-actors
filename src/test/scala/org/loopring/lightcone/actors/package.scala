@@ -44,16 +44,20 @@ package object helper {
   val orderPool = new OrderPoolImpl
   val depthOrderPool = new DepthOrderPoolImpl
 
-  def prepare(owner: String) = {
-    implicit val routes = new SimpleRoutersImpl()
-    routes.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-    routes.marketManagingActors = Map(
-      marketId.ID → system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+  implicit val routes: Routers = {
+    var r = new SimpleRoutersImpl()
+    r.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+    r.marketManagingActors = Map(
+      marketId.ID → system.actorOf(Props(newMarketManager()), "market-manager-lrc-eth")
     )
-    routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-    routes.depthViewActors = Map(
+    r.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
+    r.depthViewActors = Map(
       marketId.ID → newDepthManager(marketId)
     )
+    r
+  }
+
+  def prepare(owner: String) = {
     system.actorOf(Props(new OrderManagingActor(owner, orderPool)), "order-manager-" + owner)
   }
 
@@ -63,8 +67,7 @@ package object helper {
     OnChainAccounts.map += req.address -> map
   }
 
-  def newMarketManager(tokenS: String, tokenB: String)(implicit dustOrderEvaluator: DustOrderEvaluator, routes: Routers) = {
-    val marketId = MarketId(tokenS, tokenB)
+  def newMarketManager()(implicit dustOrderEvaluator: DustOrderEvaluator, routes: Routers) = {
     val marketConfig = MarketManagerConfig(0, 0)
     val pendingRingPool = new PendingRingPoolImpl()
     val incomeEvaluator = new RingIncomeEstimatorImpl(10)
@@ -85,6 +88,10 @@ package object helper {
 
   def askAndWait(actor: ActorRef, req: Any)(implicit timeout: Timeout) = {
     Await.result(actor ? req, timeout.duration)
+  }
+
+  def tell(actor: ActorRef, req: Any) = {
+    actor ! req
   }
 
   implicit def int2byteString(src: Int): ByteString = bigIntToByteString(src)

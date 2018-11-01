@@ -16,84 +16,59 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor._
-import akka.util.Timeout
-import akka.pattern.ask
-import org.loopring.lightcone.core._
 import org.scalatest._
-import scala.concurrent.duration._
+import helper._
 
 class MarketManagerSpec extends FlatSpec with Matchers {
-  val system = ActorSystem()
-  implicit val ec = system.dispatcher
-  implicit val timeout = new Timeout(1 seconds)
-
-  implicit val routes = new SimpleRoutersImpl
-  routes.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-  routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-  val lrc = "LRC"
-  val eth = "ETH"
-
-  implicit val tve = new TokenValueEstimatorImpl()
-  tve.setMarketCaps(Map[Address, Double](lrc → 0.8, eth → 1400))
-  tve.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1)))
-
-  val incomeEvaluator = new RingIncomeEstimatorImpl(10)
-  val simpleMatcher = new SimpleRingMatcher(incomeEvaluator)
-
-  implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
-
-  implicit val timeProvider = new SystemTimeProvider()
-  implicit val pendingRingPool = new PendingRingPoolImpl()
-
-  //info("[sbt actors/'testOnly *MarketManagerSpec -- -z submitOrder']")
   "submitOrder" should "test ring" in {
-    val marketManager = new MarketManagerImpl(MarketId(lrc, eth), MarketManagerConfig(0, 0), simpleMatcher)
-    val marketManagerActor = system.actorOf(Props(new MarketManagingActor(marketManager)))
+
+    info("[sbt actors/'testOnly *MarketManagerSpec -- -z submitOrder']")
+
+    val marketManagerActor = routes.getMarketManagingActor(marketId).get
+
     val maker1 = Order(
       id = "maker1",
       tokenS = lrc,
       tokenB = eth,
       tokenFee = lrc,
-      amountS = BigInt(100).toByteArray,
-      amountB = BigInt(10).toByteArray,
-      amountFee = BigInt(10).toByteArray,
+      amountS = 100,
+      amountB = 10,
+      amountFee = 10,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      actual = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = 100, amountB = 10, amountFee = 10))
     )
     val maker2 = Order(
       id = "maker2",
       tokenS = lrc,
       tokenB = eth,
       tokenFee = lrc,
-      amountS = BigInt(100).toByteArray,
-      amountB = BigInt(10).toByteArray,
-      amountFee = BigInt(10).toByteArray,
+      amountS = 100,
+      amountB = 10,
+      amountFee = 10,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      actual = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = 100, amountB = 10, amountFee = 10))
     )
     val taker = Order(
       id = "taker1",
       tokenS = eth,
       tokenB = lrc,
       tokenFee = lrc,
-      amountS = BigInt(10).toByteArray,
-      amountB = BigInt(100).toByteArray,
-      amountFee = BigInt(10).toByteArray,
+      amountS = 10,
+      amountB = 100,
+      amountFee = 10,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      actual = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = 10, amountB = 100, amountFee = 10))
     )
-    val delMarker1 = maker1.copy(status = OrderStatus.CANCELLED_BY_USER)
-    marketManagerActor ! SubmitOrderReq(Some(maker1))
-    //
-    //    marketManagerActor ! SubmitOrderReq(Some(maker2))
-    //
-    //    marketManagerActor ! SubmitOrderReq(Some(delMarker1))
-    //
-    marketManagerActor ! SubmitOrderReq(Some(taker))
 
+    val delMarker1 = maker1.copy(status = OrderStatus.CANCELLED_BY_USER)
+    tell(marketManagerActor, SubmitOrderReq(Some(maker1)))
+    tell(marketManagerActor, SubmitOrderReq(Some(taker)))
+
+    // todo
+    //    marketManagerActor ! SubmitOrderReq(Some(maker2))
+    //    marketManagerActor ! SubmitOrderReq(Some(delMarker1))
   }
 }
