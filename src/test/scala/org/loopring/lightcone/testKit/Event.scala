@@ -1,23 +1,51 @@
 /*
+ * Copyright 2018 Loopring Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-  Copyright 2017 Loopring Project Ltd (Loopring Foundation).
+package org.loopring.lightcone.actors
 
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
+import org.loopring.lightcone.core.{ MarketManager, MarketManagerImpl, OrderPool }
 
-  http://www.apache.org/licenses/LICENSE-2.0
+abstract class Event[T] {
+  val event: T
+  var targets = Seq.empty[TargetCheck]
 
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+  def setTargets(targets: Seq[TargetCheck]) = {
+    this.targets = targets
+  }
 
-*/
-
-package org.loopring.lightcone.testKit
-
-trait Event {
-
+  def validate() = {
+    targets map {
+      t ⇒ t.assert()
+    }
+  }
 }
+
+trait TargetCheck {
+  def assert(): Boolean
+}
+
+case class OrderContainsIdTarget(val id: ID)(implicit orderPool: OrderPool[Order]) extends TargetCheck {
+  def assert() = {
+    orderPool.contains(id)
+  }
+}
+
+case class OrderAmountSTarget(id: ID, amountS: Amount)(implicit orderPool: OrderPool[Order]) extends TargetCheck {
+  def assert() = {
+    orderPool(id).amountS == amountS
+  }
+}
+

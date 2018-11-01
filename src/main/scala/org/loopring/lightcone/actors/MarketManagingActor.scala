@@ -38,7 +38,7 @@ class MarketManagingActor(
 
   val depthActor = routes.getDepthActor(manager.marketId)
 
-  override def receive() = LoggingReceive {
+  def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
         case OrderStatus.PENDING | OrderStatus.NEW ⇒
