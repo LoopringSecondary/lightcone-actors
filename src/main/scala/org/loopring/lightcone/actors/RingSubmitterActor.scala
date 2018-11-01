@@ -35,7 +35,7 @@ class RingSubmitterActor(
 
   val ethereumAccessActor = routers.getEthAccessActor
 
-  override def receive: Receive = {
+  def receive: Receive = {
     case req: SubmitRingReq ⇒
       //todo:生成ring数据、签名以及生成rawtransction
       val data = ByteString.copyFromUtf8(req.rings.toString())
