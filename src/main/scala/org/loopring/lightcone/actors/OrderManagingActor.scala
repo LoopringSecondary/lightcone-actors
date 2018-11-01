@@ -27,6 +27,7 @@ class OrderManagingActor(
     owner: Address
 )(
     implicit
+    orderPool: OrderPool[COrder],
     dustOrderEvaluator: DustOrderEvaluator,
     routes: Routers,
     ec: ExecutionContext,
@@ -37,7 +38,6 @@ class OrderManagingActor(
 
   val ethereumAccessActor = routes.getEthAccessActor
 
-  implicit val orderPool = new OrderPool()
   val updatedOrderReceiver = new UpdatedOrderReceiver()
   orderPool.addCallback(updatedOrderReceiver.onUpdatedOrder)
   val manager: OrderManager = OrderManager.default(10000)

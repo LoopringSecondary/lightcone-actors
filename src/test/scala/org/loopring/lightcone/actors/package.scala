@@ -47,6 +47,7 @@ package object helper {
       tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
     )
     routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
+    implicit val orderPool = new OrderPoolImpl
     system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 
