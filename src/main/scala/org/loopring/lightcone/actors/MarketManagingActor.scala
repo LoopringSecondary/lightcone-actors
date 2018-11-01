@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core._
+import org.loopring.lightcone.core.{Order ⇒ COrder,_}
 import scala.concurrent.ExecutionContext
 
 class MarketManagingActor(
@@ -36,26 +36,61 @@ class MarketManagingActor(
 
   val ringSubmitterActor = routes.getRingSubmitterActor
 
+  val depthActor = routes.getDepthActor(manager.marketId)
+
   override def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
-        case OrderStatus.PENDING ⇒
+        case OrderStatus.PENDING | OrderStatus.NEW ⇒
           val res = manager.submitOrder(order.toPojo)
           val rings = res.rings map (_.toProto)
           if (rings.nonEmpty) {
             ringSubmitterActor ! SubmitRingReq(rings = rings)
           }
+          if (res.affectedOrders.nonEmpty) {
+            createAndSendDepthEvents(res.affectedOrders)
+          }
         case _ ⇒
           manager.deleteOrder(order.toPojo)
+          depthActor.foreach(_ ! DepthEventList(
+            Seq(
+              DepthEvent(
+                order.id,
+                order.tokenS,
+                order.tokenB,
+                order.amountS,
+                order.amountB,
+                BigInt(0))
+            )))
       }
 
     case updatedGasPrce: UpdatedGasPrice ⇒
       if (latestGasPrice > updatedGasPrce.gasPrice) {
         val res = manager.triggerMatch()
         ringSubmitterActor ! SubmitRingReq(rings = res.rings map (_.toProto))
+        if (res.affectedOrders.nonEmpty) {
+          createAndSendDepthEvents(res.affectedOrders)
+        }
       }
       latestGasPrice = updatedGasPrce.gasPrice
+  }
 
+  private def createAndSendDepthEvents(affectedOrders: Map[ID, COrder]): Unit = {
+    val depthEvents = affectedOrders map {
+      o ⇒
+        val remainedOrder = o._2
+        DepthEvent(
+          remainedOrder.id,
+          remainedOrder.tokenS,
+          remainedOrder.tokenB,
+          remainedOrder.amountS,
+          remainedOrder.amountB,
+          remainedOrder.matchable.amountS
+        )
+    }
+    if (depthEvents.nonEmpty) {
+      depthActor.foreach(_ ! DepthEventList(depthEvents.toSeq))
+    }
   }
 
 }
