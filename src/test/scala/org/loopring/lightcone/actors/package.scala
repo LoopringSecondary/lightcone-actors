@@ -40,15 +40,21 @@ package object helper {
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
+  val marketId = MarketId(lrc, eth)
+  val orderPool = new OrderPoolImpl
+  val depthOrderPool = new DepthOrderPoolImpl
+
   def prepare(owner: String) = {
     implicit val routes = new SimpleRoutersImpl()
     routes.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
     routes.marketManagingActors = Map(
-      tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+      marketId.ID → system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
     )
     routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-    implicit val orderPool = new OrderPoolImpl
-    system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
+    routes.depthViewActors = Map(
+      marketId.ID → newDepthManager(marketId)
+    )
+    system.actorOf(Props(new OrderManagingActor(owner, orderPool)), "order-manager-" + owner)
   }
 
   def updateAccountOnChain(req: UpdateBalanceAndAllowanceReq) = {
@@ -65,6 +71,16 @@ package object helper {
     val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
     val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustOrderEvaluator)
     new MarketManagingActor(marketManager)
+  }
+
+  def newDepthManager(marketId: MarketId) = {
+    val marketId = MarketId(lrc, eth)
+    val depthViewMap = Map(
+      0.1 → new DepthView(marketId, Granularity(0.1, 1), 10000)(depthOrderPool),
+      0.01 → new DepthView(marketId, Granularity(0.01, 2), 10000)(depthOrderPool),
+      0.001 → new DepthView(marketId, Granularity(0.001, 3), 10000)(depthOrderPool)
+    )
+    system.actorOf(Props(new DepthViewActor(marketId, depthOrderPool, depthViewMap)), "depth-view-lrc-eth")
   }
 
   def askAndWait(actor: ActorRef, req: Any)(implicit timeout: Timeout) = {
