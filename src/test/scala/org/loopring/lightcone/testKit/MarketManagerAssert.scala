@@ -20,15 +20,30 @@ import org.loopring.lightcone.actors._
 
 case class UpdatedGasPriceEvent(event: UpdatedGasPrice, asserts: Seq[Assert], info: String) extends Event
 
-case class MarketManagerBidsSizeAssert(size: Int)(implicit marketManager: MarketManagerImpl) extends Assert {
-  def assert() = {
-    marketManager.bids.size == size
-  }
-}
-
 case class MarketManagerBidsContainsOrderAssert(order: Order)(implicit marketManager: MarketManagerImpl) extends Assert {
   def assert() = {
     marketManager.bids.contains(order)
   }
 }
 
+case class MarketManagerBidsVolumeAssert(volumeExpect: Amount, sizeExpect: Int)(implicit marketManager: MarketManagerImpl) extends Assert {
+  def assert() = {
+    var volume = BigInt(0)
+    marketManager.bids.foreach(volume += _.matchable.amountS)
+    volume == volumeExpect && marketManager.bids.size == sizeExpect
+  }
+}
+
+case class MarketManagerAsksContainsOrderAssert(order: Order)(implicit marketManager: MarketManagerImpl) extends Assert {
+  def assert() = {
+    marketManager.asks.contains(order)
+  }
+}
+
+case class MarketManagerAsksVolumeAssert(volumeExpect: Amount, sizeExpect: Int)(implicit marketManager: MarketManagerImpl) extends Assert {
+  def assert() = {
+    var volume = BigInt(0)
+    marketManager.asks.foreach(volume += _.matchable.amountS)
+    volume == volumeExpect && marketManager.asks.size == sizeExpect
+  }
+}

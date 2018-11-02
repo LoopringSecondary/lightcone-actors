@@ -50,47 +50,49 @@ class MarketManagerSpec extends FlatSpec with Matchers with EventsBehaviors {
       status = OrderStatus.NEW,
       actual = Some(OrderState(amountS = BigInt(100).toByteArray, amountB = BigInt(10).toByteArray, amountFee = BigInt(10).toByteArray))
     )
+    val taker = Order(
+      id = "taker1",
+      tokenS = eth,
+      tokenB = lrc,
+      tokenFee = lrc,
+      amountS = BigInt(50).toByteArray,
+      amountB = BigInt(500).toByteArray,
+      amountFee = BigInt(50).toByteArray,
+      walletSplitPercentage = 0.2,
+      status = OrderStatus.NEW,
+      actual = Some(OrderState(amountS = BigInt(50).toByteArray, amountB = BigInt(500).toByteArray, amountFee = BigInt(50).toByteArray))
+    )
 
     var events: Seq[Event] = Seq.empty[Event]
     events :+= OrderEvent(
       event = maker1,
       asserts = Seq(
-        MarketManagerBidsSizeAssert(1),
+        MarketManagerBidsVolumeAssert(100, 1),
         MarketManagerBidsContainsOrderAssert(maker1.toPojo())
       ),
       info = s"submit first order, tokenS:${maker1.tokenS}, tokenB:${maker1.tokenB}, amountS:${BigInt(maker1.amountS)}, amountB:${BigInt(maker1.amountB)}," +
         s" then the bids size should be 1 and bids contains it."
     )
-
     events :+= OrderEvent(
       event = maker2,
       asserts = Seq(
-        MarketManagerBidsSizeAssert(2)
+        MarketManagerBidsVolumeAssert(200, 2)
       ),
       info = "submit second order, the bids size should be 2"
     )
     events :+= OrderEvent(
       event = maker2.copy(status = OrderStatus.CANCELLED_BY_USER),
       asserts = Seq(
-        MarketManagerBidsSizeAssert(1)
+        MarketManagerBidsVolumeAssert(100, 1)
       ),
       info = "cancel the second order, the bids size should be 1"
     )
     events :+= OrderEvent(
-      event = Order(
-        id = "taker1",
-        tokenS = eth,
-        tokenB = lrc,
-        tokenFee = lrc,
-        amountS = BigInt(10).toByteArray,
-        amountB = BigInt(100).toByteArray,
-        amountFee = BigInt(10).toByteArray,
-        walletSplitPercentage = 0.2,
-        status = OrderStatus.NEW,
-        actual = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
-      ),
+      event = taker,
       asserts = Seq(
-        MarketManagerBidsSizeAssert(0)
+        MarketManagerBidsVolumeAssert(0, 0),
+        MarketManagerAsksVolumeAssert(40, 1),
+        MarketManagerAsksContainsOrderAssert(taker.toPojo)
       ),
       info = "submit first taker order, then should be fullfilled, the bids size should be 0"
     )
