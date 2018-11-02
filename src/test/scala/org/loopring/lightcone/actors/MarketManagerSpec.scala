@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors
 import akka.actor.ActorRef
 import org.scalatest._
 import helper._
-import org.loopring.lightcone.core.{ MarketManagerBidsContainsOrderAssert, MarketManagerBidsSizeAssert, UpdatedGasPriceEvent }
+import org.loopring.lightcone.core._
 
 class MarketManagerSpec extends FlatSpec with Matchers with EventsBehaviors {
   val marketManagerActor: ActorRef = routes.getMarketManagingActor(marketId).get

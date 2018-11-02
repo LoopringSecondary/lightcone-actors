@@ -16,8 +16,6 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.OrderPool
-
 trait Event {
   val info: String
   val event: Any

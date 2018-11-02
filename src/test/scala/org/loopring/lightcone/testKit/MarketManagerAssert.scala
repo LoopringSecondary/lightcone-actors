@@ -16,7 +16,7 @@
 
 package org.loopring.lightcone.core
 
-import org.loopring.lightcone.actors.{ Assert, Event, UpdatedGasPrice }
+import org.loopring.lightcone.actors._
 
 case class UpdatedGasPriceEvent(event: UpdatedGasPrice, asserts: Seq[Assert], info: String) extends Event
 
