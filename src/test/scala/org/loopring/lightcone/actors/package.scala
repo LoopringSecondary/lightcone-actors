@@ -43,19 +43,22 @@ package object helper {
   val marketId = MarketId(lrc, eth)
   val orderPool = new OrderPoolImpl
   val depthOrderPool = new DepthOrderPoolImpl
+  val marketConfig = MarketManagerConfig(0, 0)
+  val pendingRingPool = new PendingRingPoolImpl()
+  val incomeEvaluator = new RingIncomeEstimatorImpl(10)
+  val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
+  implicit val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustEvaluator)
 
-  implicit val routes: Routers = {
-    var r = new SimpleRoutersImpl()
-    r.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-    r.marketManagingActors = Map(
-      marketId.ID → system.actorOf(Props(newMarketManager()), "market-manager-lrc-eth")
-    )
-    r.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-    r.depthViewActors = Map(
-      marketId.ID → newDepthManager(marketId)
-    )
-    r
-  }
+  var r = new SimpleRoutersImpl()
+  r.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+  r.marketManagingActors = Map(
+    marketId.ID → system.actorOf(Props(newMarketManager()), "market-manager-lrc-eth")
+  )
+  r.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
+  r.depthViewActors = Map(
+    marketId.ID → newDepthManager(marketId)
+  )
+  implicit val routes: Routers = r
 
   def prepare(owner: String) = {
     system.actorOf(Props(new OrderManagingActor(owner, orderPool)), "order-manager-" + owner)
@@ -67,12 +70,7 @@ package object helper {
     OnChainAccounts.map += req.address -> map
   }
 
-  def newMarketManager()(implicit dustOrderEvaluator: DustOrderEvaluator, routes: Routers) = {
-    val marketConfig = MarketManagerConfig(0, 0)
-    val pendingRingPool = new PendingRingPoolImpl()
-    val incomeEvaluator = new RingIncomeEstimatorImpl(10)
-    val ringMatcher = new SimpleRingMatcher(incomeEvaluator)
-    val marketManager = new MarketManagerImpl(marketId, marketConfig, ringMatcher)(pendingRingPool, dustOrderEvaluator)
+  def newMarketManager() = {
     new MarketManagingActor(marketManager)
   }
 

@@ -18,7 +18,6 @@ package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core.OrderPool
 
-
 case class OrderEvent(event: Order, asserts: Seq[Assert], info: String) extends Event
 
 case class OrderContainsIdAssert(val id: ID)(implicit orderPool: OrderPool[Order]) extends Assert {
