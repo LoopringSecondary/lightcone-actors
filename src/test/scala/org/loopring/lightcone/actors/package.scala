@@ -40,15 +40,25 @@ package object helper {
   tokenValueEstimator.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1), vite -> BigInt(1)))
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
-  def prepare(owner: String) = {
-    implicit val routes = new SimpleRoutersImpl()
-    routes.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-    routes.marketManagingActors = Map(
-      tokensToMarketHash(lrc, eth) -> system.actorOf(Props(newMarketManager(lrc, eth)), "market-manager-lrc-eth")
+  val marketId = MarketId(lrc, eth)
+  val orderPool = new OrderPoolImpl
+  val depthOrderPool = new DepthOrderPoolImpl
+
+  implicit val routes: Routers = {
+    var r = new SimpleRoutersImpl()
+    r.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
+    r.marketManagingActors = Map(
+      marketId.ID → system.actorOf(Props(newMarketManager()), "market-manager-lrc-eth")
     )
-    routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-    implicit val orderPool = new OrderPoolImpl
-    system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
+    r.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
+    r.depthViewActors = Map(
+      marketId.ID → newDepthManager(marketId)
+    )
+    r
+  }
+
+  def prepare(owner: String) = {
+    system.actorOf(Props(new OrderManagingActor(owner, orderPool)), "order-manager-" + owner)
   }
 
   def updateAccountOnChain(req: UpdateBalanceAndAllowanceReq) = {
@@ -57,8 +67,7 @@ package object helper {
     OnChainAccounts.map += req.address -> map
   }
 
-  def newMarketManager(tokenS: String, tokenB: String)(implicit dustOrderEvaluator: DustOrderEvaluator, routes: Routers) = {
-    val marketId = MarketId(tokenS, tokenB)
+  def newMarketManager()(implicit dustOrderEvaluator: DustOrderEvaluator, routes: Routers) = {
     val marketConfig = MarketManagerConfig(0, 0)
     val pendingRingPool = new PendingRingPoolImpl()
     val incomeEvaluator = new RingIncomeEstimatorImpl(10)
@@ -67,8 +76,22 @@ package object helper {
     new MarketManagingActor(marketManager)
   }
 
+  def newDepthManager(marketId: MarketId) = {
+    val marketId = MarketId(lrc, eth)
+    val depthViewMap = Map(
+      0.1 → new DepthView(marketId, Granularity(0.1, 1), 10000)(depthOrderPool),
+      0.01 → new DepthView(marketId, Granularity(0.01, 2), 10000)(depthOrderPool),
+      0.001 → new DepthView(marketId, Granularity(0.001, 3), 10000)(depthOrderPool)
+    )
+    system.actorOf(Props(new DepthViewActor(marketId, depthOrderPool, depthViewMap)), "depth-view-lrc-eth")
+  }
+
   def askAndWait(actor: ActorRef, req: Any)(implicit timeout: Timeout) = {
     Await.result(actor ? req, timeout.duration)
+  }
+
+  def tell(actor: ActorRef, req: Any) = {
+    actor ! req
   }
 
   implicit def int2byteString(src: Int): ByteString = bigIntToByteString(src)
