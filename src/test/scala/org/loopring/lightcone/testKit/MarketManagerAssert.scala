@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.core
 
-import org.loopring.lightcone.core.OrderPool
+import org.loopring.lightcone.actors.{ Assert, Event, UpdatedGasPrice }
 
-trait Event {
-  val info: String
-  val event: Any
-  val asserts: Seq[Assert]
+case class UpdatedGasPriceEvent(event: UpdatedGasPrice, asserts: Seq[Assert], info: String) extends Event
+
+case class MarketManagerBidsSizeAssert(size: Int)(implicit marketManager: MarketManagerImpl) extends Assert {
+  def assert() = {
+    marketManager.bids.size == size
+  }
 }
 
-trait Assert {
-  def assert(): Boolean
+case class MarketManagerBidsContainsOrderAssert(order: Order)(implicit marketManager: MarketManagerImpl) extends Assert {
+  def assert() = {
+    marketManager.bids.contains(order)
+  }
 }
 

@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.core
+package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.actors.TargetCheck
+import org.loopring.lightcone.core.OrderPool
 
-class MarketManagerSizeTarget(size: Int)(implicit marketManager: MarketManagerImpl) extends TargetCheck {
+
+case class OrderEvent(event: Order, asserts: Seq[Assert], info: String) extends Event
+
+case class OrderContainsIdAssert(val id: ID)(implicit orderPool: OrderPool[Order]) extends Assert {
   def assert() = {
-    marketManager.bids.size == size
+    orderPool.contains(id)
   }
 }
+case class OrderAmountSTarget(id: ID, amountS: Amount)(implicit orderPool: OrderPool[Order]) extends Assert {
+  def assert() = {
+    orderPool(id).amountS == amountS
+  }
+}
+
