@@ -25,5 +25,4 @@ trait Routers {
   def getMarketManagingActor(marketId: MarketId): Option[ActorRef]
   def getEthAccessActor: ActorRef
   def getRingSubmitterActor: ActorRef
-  def getDepthActor(marketId: MarketId): Option[ActorRef]
 }
