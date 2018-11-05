@@ -16,36 +16,13 @@
 
 package org.loopring.lightcone.actors
 
-import org.loopring.lightcone.core.{ MarketManager, MarketManagerImpl, OrderPool }
-
-abstract class Event[T] {
-  val event: T
-  var targets = Seq.empty[TargetCheck]
-
-  def setTargets(targets: Seq[TargetCheck]) = {
-    this.targets = targets
-  }
-
-  def validate() = {
-    targets map {
-      t ⇒ t.assert()
-    }
-  }
+trait Event {
+  val info: String
+  val event: Any
+  val asserts: Seq[Assert]
 }
 
-trait TargetCheck {
+trait Assert {
   def assert(): Boolean
-}
-
-case class OrderContainsIdTarget(val id: ID)(implicit orderPool: OrderPool[Order]) extends TargetCheck {
-  def assert() = {
-    orderPool.contains(id)
-  }
-}
-
-case class OrderAmountSTarget(id: ID, amountS: Amount)(implicit orderPool: OrderPool[Order]) extends TargetCheck {
-  def assert() = {
-    orderPool(id).amountS == amountS
-  }
 }
 
