@@ -55,9 +55,6 @@ package object helper {
     marketId.ID → system.actorOf(Props(newMarketManager()), "market-manager-lrc-eth")
   )
   r.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-  r.depthViewActors = Map(
-    marketId.ID → newDepthManager(marketId)
-  )
   implicit val routes: Routers = r
 
   def prepare(owner: String) = {
@@ -72,16 +69,6 @@ package object helper {
 
   def newMarketManager() = {
     new MarketManagingActor(marketManager)
-  }
-
-  def newDepthManager(marketId: MarketId) = {
-    val marketId = MarketId(lrc, eth)
-    val depthViewMap = Map(
-      0.1 → new DepthView(marketId, Granularity(0.1, 1), 10000)(depthOrderPool),
-      0.01 → new DepthView(marketId, Granularity(0.01, 2), 10000)(depthOrderPool),
-      0.001 → new DepthView(marketId, Granularity(0.001, 3), 10000)(depthOrderPool)
-    )
-    system.actorOf(Props(new DepthViewActor(marketId, depthOrderPool, depthViewMap)), "depth-view-lrc-eth")
   }
 
   def askAndWait(actor: ActorRef, req: Any)(implicit timeout: Timeout) = {
