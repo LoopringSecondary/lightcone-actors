@@ -44,8 +44,6 @@ class SimpleRoutersImpl extends Routers {
 
   def getRingSubmitterActor: ActorRef = ringSubmitterActor
 
-  def getDepthActor(marketId: MarketId): Option[ActorRef] = {
-    depthViewActors.get(tokensToMarketHash(marketId.primary, marketId.secondary))
-  }
+  def getDepthActor(marketId: MarketId): Option[ActorRef] = ???
 
 }
