@@ -16,13 +16,13 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor.ActorRef
-import org.loopring.lightcone.core.MarketId
-
-trait Routers {
-
-  def getOrderManagingActor(owner: Address): Option[ActorRef]
-  def getMarketManagingActor(marketId: MarketId): Option[ActorRef]
-  def getEthAccessActor: ActorRef
-  def getRingSubmitterActor: ActorRef
+trait Event {
+  val info: String
+  val event: Any
+  val asserts: Seq[Assert]
 }
+
+trait Assert {
+  def assert(): Boolean
+}
+

@@ -37,7 +37,7 @@ class OrderManagingActor(
 
   val ethereumAccessActor = routes.getEthAccessActor
 
-  implicit val orderPool = new OrderPool()
+  implicit val orderPool = new OrderPoolImpl
   val updatedOrderReceiver = new UpdatedOrderReceiver()
   orderPool.addCallback(updatedOrderReceiver.onUpdatedOrder)
   val manager: OrderManager = OrderManager.default(10000)

@@ -170,3 +170,39 @@ message RingExecutedRes {
   bytes used_gas = 4;
   int64 block_number = 5;
 }
+
+message DepthEvent {
+  string order_id = 1;
+  string token_s = 2;
+  string token_b = 3;
+  bytes amount_s = 4;
+  bytes amount_b = 5;
+  bytes matchable_amount_s = 6;
+}
+
+message DepthEventList {
+  repeated DepthEvent events = 1;
+}
+
+// todo rpc层路由到某个market对应的actor
+message DepthReq {
+  double granularity = 1;
+  int32 length = 2;
+}
+
+message DepthRes {
+  message Entry {
+    double price = 1;
+    bytes amount = 2;
+  }
+
+  repeated Entry asks = 1;
+  repeated Entry bids = 2;
+
+}
+
+// todo eth层路由到某个market对应的actor
+message LatestMatchPriceEvent {
+  bytes amountS = 1;
+  bytes amountB = 2;
+}

@@ -25,12 +25,13 @@ import org.loopring.lightcone.actors.base._
 import org.scalatest._
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
+import helper._
 
 class RepeatedJobSpec extends FlatSpec with Matchers {
 
-  val system = ActorSystem()
-  implicit val ec = system.dispatcher
-  implicit val timeout = new Timeout(1 seconds)
+  //  val system = ActorSystem()
+  //  implicit val ec = system.dispatcher
+  //  implicit val timeout = new Timeout(1 seconds)
 
   class JobActor(jobs: Job*)(
       implicit
@@ -45,6 +46,7 @@ class RepeatedJobSpec extends FlatSpec with Matchers {
       case _ ⇒
     }
   }
+
   //info("[sbt actors/'testOnly *RepeatedJobSpec -- -z repeatedJob']")
   "repeatedJob" should "mutil jobs" in {
     var i1 = new AtomicInteger()

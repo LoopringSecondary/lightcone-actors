@@ -16,40 +16,16 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor._
-import akka.util.Timeout
-import akka.pattern.ask
-import org.loopring.lightcone.core._
+import akka.actor.ActorRef
 import org.scalatest._
-import scala.concurrent.duration._
+import helper._
+import org.loopring.lightcone.core._
 
-class MarketManagerSpec extends FlatSpec with Matchers {
-  val system = ActorSystem()
-  implicit val ec = system.dispatcher
-  implicit val timeout = new Timeout(1 seconds)
+class MarketManagerSpec extends FlatSpec with Matchers with EventsBehaviors {
+  val marketManagerActor: ActorRef = routes.getMarketManagingActor(marketId).get
 
-  implicit val routes = new SimpleRoutersImpl
-  routes.ethAccessActor = system.actorOf(Props(new EthAccessSpecActor()))
-  routes.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
-  val lrc = "LRC"
-  val eth = "ETH"
-
-  implicit val tve = new TokenValueEstimatorImpl()
-  tve.setMarketCaps(Map[Address, Double](lrc → 0.8, eth → 1400))
-  tve.setTokens(Map[Address, BigInt](lrc → BigInt(1), eth → BigInt(1)))
-
-  val incomeEvaluator = new RingIncomeEstimatorImpl(10)
-  val simpleMatcher = new SimpleRingMatcher(incomeEvaluator)
-
-  implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
-
-  implicit val timeProvider = new SystemTimeProvider()
-  implicit val pendingRingPool = new PendingRingPoolImpl()
-
-  //info("[sbt actors/'testOnly *MarketManagerSpec -- -z submitOrder']")
+  info("[sbt actors/'testOnly *MarketManagerSpec -- -z submitOrder']")
   "submitOrder" should "test ring" in {
-    val marketManager = new MarketManagerImpl(MarketId(lrc, eth), MarketManagerConfig(0, 0), simpleMatcher)
-    val marketManagerActor = system.actorOf(Props(new MarketManagingActor(marketManager)))
     val maker1 = Order(
       id = "maker1",
       tokenS = lrc,
@@ -79,21 +55,55 @@ class MarketManagerSpec extends FlatSpec with Matchers {
       tokenS = eth,
       tokenB = lrc,
       tokenFee = lrc,
-      amountS = BigInt(10).toByteArray,
-      amountB = BigInt(100).toByteArray,
-      amountFee = BigInt(10).toByteArray,
+      amountS = BigInt(50).toByteArray,
+      amountB = BigInt(500).toByteArray,
+      amountFee = BigInt(50).toByteArray,
       walletSplitPercentage = 0.2,
       status = OrderStatus.NEW,
-      actual = Some(OrderState(amountS = BigInt(10).toByteArray, amountB = BigInt(100).toByteArray, amountFee = BigInt(10).toByteArray))
+      actual = Some(OrderState(amountS = BigInt(50).toByteArray, amountB = BigInt(500).toByteArray, amountFee = BigInt(50).toByteArray))
     )
-    val delMarker1 = maker1.copy(status = OrderStatus.CANCELLED_BY_USER)
-    marketManagerActor ! SubmitOrderReq(Some(maker1))
-    //
-    //    marketManagerActor ! SubmitOrderReq(Some(maker2))
-    //
-    //    marketManagerActor ! SubmitOrderReq(Some(delMarker1))
-    //
-    marketManagerActor ! SubmitOrderReq(Some(taker))
+
+    var events: Seq[Event] = Seq.empty[Event]
+    events :+= OrderEvent(
+      event = maker1,
+      asserts = Seq(
+        MarketManagerBidsVolumeAssert(100, 1),
+        MarketManagerBidsContainsOrderAssert(maker1.toPojo())
+      ),
+      info = s"submit first order, tokenS:${maker1.tokenS}, tokenB:${maker1.tokenB}, amountS:${BigInt(maker1.amountS)}, amountB:${BigInt(maker1.amountB)}," +
+        s" then the bids size should be 1 and bids contains it."
+    )
+    events :+= OrderEvent(
+      event = maker2,
+      asserts = Seq(
+        MarketManagerBidsVolumeAssert(200, 2)
+      ),
+      info = "submit second order, the bids size should be 2"
+    )
+    events :+= OrderEvent(
+      event = maker2.copy(status = OrderStatus.CANCELLED_BY_USER),
+      asserts = Seq(
+        MarketManagerBidsVolumeAssert(100, 1)
+      ),
+      info = "cancel the second order, the bids size should be 1"
+    )
+    events :+= OrderEvent(
+      event = taker,
+      asserts = Seq(
+        MarketManagerBidsVolumeAssert(0, 0),
+        MarketManagerAsksVolumeAssert(40, 1),
+        MarketManagerAsksContainsOrderAssert(taker.toPojo)
+      ),
+      info = "submit first taker order, then should be fullfilled, the bids size should be 0"
+    )
+
+    events :+= UpdatedGasPriceEvent(
+      event = UpdatedGasPrice(),
+      asserts = Seq(),
+      info = "updated gas price, then should triggerMatch "
+    )
+
+    batchTest(events)
 
   }
 }

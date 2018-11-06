@@ -19,13 +19,7 @@ package org.loopring.lightcone
 import com.google.protobuf.ByteString
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.core.{
-  Order ⇒ COrder,
-  OrderState ⇒ COrderState,
-  OrderStatus ⇒ COrderStatus,
-  ExpectedFill ⇒ CExpectedFill,
-  Ring ⇒ CRing
-}
+import org.loopring.lightcone.core.{ MarketId, Rational, DepthEntry ⇒ CDepthEntry, DepthOrder ⇒ CDepthEvent, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, OrderStatus ⇒ COrderStatus, Ring ⇒ CRing }
 
 package object actors {
   type Amount = BigInt
@@ -168,5 +162,28 @@ package object actors {
       ring.getMaker.toPojo,
       ring.getTaker.toPojo
     )
+  }
+
+  implicit class RichDepthEvent(depth: DepthEvent) {
+    def toPojo() = CDepthEvent(
+      depth.orderId,
+      depth.tokenS,
+      depth.tokenB,
+      Rational(depth.amountS, depth.amountB),
+      depth.matchableAmountS
+    )
+  }
+
+  implicit class RichDepthEntry(entry: CDepthEntry) {
+
+    def toProto() = DepthRes.Entry(
+      entry.price,
+      entry.amountS
+    )
+  }
+
+  implicit class RichMarketId(src: MarketId) {
+
+    def ID: String = tokensToMarketHash(src.primary, src.secondary)
   }
 }

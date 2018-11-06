@@ -19,7 +19,7 @@ package org.loopring.lightcone.actors
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core._
+import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import scala.concurrent.ExecutionContext
 
 class MarketManagingActor(
@@ -36,7 +36,7 @@ class MarketManagingActor(
 
   val ringSubmitterActor = routes.getRingSubmitterActor
 
-  override def receive() = LoggingReceive {
+  def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
       order.status match {
         case OrderStatus.PENDING | OrderStatus.NEW ⇒
