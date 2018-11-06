@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext
  *  @param ec
  *  @param timeout
  */
-class RingExecutedActor()(
+class RingExecutedStatusActor()(
     implicit
     routes: Routers,
     ec: ExecutionContext,
