@@ -34,7 +34,7 @@ class MarketManagingActor(
   with ActorLogging {
   var latestGasPrice = 0l
 
-  val ringSubmitterActor = routes.getRingSubmitterActor
+  def ringSubmitterActor = routes.getRingSubmitterActor
 
   def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒

@@ -16,11 +16,12 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor.{ Actor, ActorLogging }
+import akka.actor.ActorLogging
+import akka.event.LoggingReceive
 import akka.util.Timeout
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.core.MarketManager
-import scala.concurrent.ExecutionContext
+import org.loopring.lightcone.actors.base._
+
+import scala.concurrent._
 
 class RingSubmitterActor(
     submitter: Address
@@ -30,16 +31,33 @@ class RingSubmitterActor(
     ec: ExecutionContext,
     timeout: Timeout
 )
-  extends Actor
+  extends RepeatedJobActor
   with ActorLogging {
 
-  val ethereumAccessActor = routers.getEthAccessActor
+  val ringSubmitter = new RingSubmitterImpl() //todo:submitter，protocol，privatekey
 
-  def receive: Receive = {
+  def ethereumAccessActor = routers.getEthAccessActor
+
+  val resubmitJob = Job(id = 1, name = "resubmitTx", scheduleDelay = 120 * 1000, callMethod = resubmitTx _)
+
+  initAndStartNextRound(resubmitJob)
+
+  override def receive: Receive = super.receive orElse LoggingReceive {
     case req: SubmitRingReq ⇒
-      //todo:生成ring数据、签名以及生成rawtransction
-      val data = ByteString.copyFromUtf8(req.rings.toString())
-      ethereumAccessActor ! SendRawTransaction(data)
+      val inputData = ringSubmitter.generateInputData(req.rings)
+      val txData = ringSubmitter.generateTxData(inputData)
+      ethereumAccessActor ! SendRawTransaction(txData)
   }
 
+  //未被提交的交易需要使用新的gas和gasprice重新提交再次提交
+  def resubmitTx(): Future[Unit] = {
+    //todo：查询数据库等得到为能及时打块的交易
+    val inputDataList = Seq.empty[String]
+    inputDataList.foreach {
+      inputData ⇒
+        val txData = ringSubmitter.generateTxData(inputData)
+        ethereumAccessActor ! SendRawTransaction(txData)
+    }
+    Future.successful(Unit)
+  }
 }
