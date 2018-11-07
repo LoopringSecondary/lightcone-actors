@@ -55,12 +55,10 @@ class RingSubmitterImpl(
         Seq.empty[LOrder],
         ""
       )
-
       val orders = rings.flatMap {
         ring ⇒
           Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
       }.distinct
-
       val orderIndexes = rings.map {
         ring ⇒
           Seq(
@@ -68,12 +66,10 @@ class RingSubmitterImpl(
             orders.indexOf(ring.getMaker.getOrder)
           )
       }
-
       lRing = lRing.copy(
         //        orders = orders.map(convertToLOrder), //todo:
         ringOrderIndex = orderIndexes
       )
-
       val signatureData = Sign.signMessage(
         Numeric.hexStringToByteArray(lRing.hash),
         credentials.getEcKeyPair
