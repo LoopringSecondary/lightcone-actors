@@ -44,9 +44,12 @@ class RingSubmitterActor(
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: SubmitRingReq ⇒
-      val inputData = ringSubmitter.generateInputData(req.rings)
-      val txData = ringSubmitter.generateTxData(inputData)
-      ethereumAccessActor ! SendRawTransaction(txData)
+      val inputDatas = ringSubmitter.generateInputData(req.rings)
+      inputDatas.foreach{
+        inputData ⇒
+          val txData = ringSubmitter.generateTxData(inputData)
+          ethereumAccessActor ! SendRawTransaction(txData)
+      }
   }
 
   //未被提交的交易需要使用新的gas和gasprice重新提交再次提交
