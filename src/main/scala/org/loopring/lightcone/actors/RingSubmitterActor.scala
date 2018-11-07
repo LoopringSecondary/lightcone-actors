@@ -34,7 +34,7 @@ class RingSubmitterActor(
   extends RepeatedJobActor
   with ActorLogging {
 
-  val ringSubmitter = new RingSubmitterImpl() //todo:submitter，protocol，privatekey
+  val ringSubmitter = new RingSubmitterImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
 
   def ethereumAccessActor = routers.getEthAccessActor
 
@@ -45,7 +45,7 @@ class RingSubmitterActor(
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: SubmitRingReq ⇒
       val inputDatas = ringSubmitter.generateInputData(req.rings)
-      inputDatas.foreach{
+      inputDatas.foreach {
         inputData ⇒
           val txData = ringSubmitter.generateTxData(inputData)
           ethereumAccessActor ! SendRawTransaction(txData)

@@ -18,7 +18,7 @@ package org.loopring.lightcone.actors
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import org.loopring.lightcone.lib.{Order ⇒ LOrder, Ring ⇒ LRing}
+import org.loopring.lightcone.lib.{ Order ⇒ LOrder, Ring ⇒ LRing }
 import org.web3j.crypto._
 import org.web3j.tx.ChainId
 import org.web3j.utils.Numeric
@@ -28,7 +28,7 @@ import scala.annotation.tailrec
 class RingSubmitterImpl(
     protocol: String = "",
     chainId: Byte = 0.toByte,
-    privateKey: String = "",
+    privateKey: String = "0x",
     feeReceipt: String = ""
 ) extends RingSubmitter {
   //防止一个tx中的订单过多，超过 gaslimit
@@ -39,10 +39,10 @@ class RingSubmitterImpl(
 
   def getSubmitterAddress(): String = credentials.getAddress
 
-  def generateInputData(rings: Seq[Ring]): Seq[String]  = {
+  def generateInputData(rings: Seq[Ring]): Seq[String] = {
 
     @tailrec
-    def generateInputDataRec(rings:Seq[Ring], res:Seq[String]):Seq[String] = {
+    def generateInputDataRec(rings: Seq[Ring], res: Seq[String]): Seq[String] = {
       if (rings.isEmpty) {
         return res
       }
@@ -53,37 +53,43 @@ class RingSubmitterImpl(
         "",
         Seq.empty[Seq[Int]],
         Seq.empty[LOrder],
-        "",
-        "")
+        ""
+      )
 
       val orders = rings.flatMap {
         ring ⇒
           Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
       }.distinct
 
-      val orderIndexes = rings.map{
+      val orderIndexes = rings.map {
         ring ⇒
           Seq(
             orders.indexOf(ring.getTaker.getOrder),
-            orders.indexOf(ring.getMaker.getOrder))
+            orders.indexOf(ring.getMaker.getOrder)
+          )
       }
 
       lRing = lRing.copy(
+        //        orders = orders.map(convertToLOrder), //todo:
         ringOrderIndex = orderIndexes
       )
 
       val signatureData = Sign.signMessage(
         Numeric.hexStringToByteArray(lRing.hash),
-        credentials.getEcKeyPair)
+        credentials.getEcKeyPair
+      )
       val sigBytes = signatureData.getR ++ signatureData.getS
       lRing = lRing.copy(sig = Numeric.toHexString(sigBytes))
-      //lRing.getInputData()
+      //todo:lRing.getInputData()
       val inputData = ""
       generateInputDataRec(remained, res :+ inputData)
     }
 
     generateInputDataRec(rings, Seq.empty[String])
   }
+
+  //need to get From db
+  private def convertToLOrder(order: Order): LOrder = ???
 
   def generateTxData(inputData: String): Array[Byte] = {
     val rawTransaction = RawTransaction.createTransaction(

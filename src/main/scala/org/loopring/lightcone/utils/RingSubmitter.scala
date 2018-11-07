@@ -17,7 +17,7 @@
 package org.loopring.lightcone.actors
 
 trait RingSubmitter {
-  def generateInputData(rings: Seq[Ring]):Seq[String]
+  def generateInputData(rings: Seq[Ring]): Seq[String]
   def generateTxData(inputData: String): Array[Byte]
   def getSubmitterAddress(): String
 }
