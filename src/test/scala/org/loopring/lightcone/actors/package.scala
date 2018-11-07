@@ -41,7 +41,6 @@ package object helper {
   implicit val dustEvaluator = new DustOrderEvaluatorImpl(1)
 
   val marketId = MarketId(lrc, eth)
-  val orderPool = new OrderPoolImpl
   val depthOrderPool = new DepthOrderPoolImpl
   val marketConfig = MarketManagerConfig(0, 0)
   val pendingRingPool = new PendingRingPoolImpl()
@@ -58,7 +57,7 @@ package object helper {
   implicit val routes: Routers = r
 
   def prepare(owner: String) = {
-    system.actorOf(Props(new OrderManagingActor(owner, orderPool)), "order-manager-" + owner)
+    system.actorOf(Props(new OrderManagingActor(owner)), "order-manager-" + owner)
   }
 
   def updateAccountOnChain(req: UpdateBalanceAndAllowanceReq) = {
