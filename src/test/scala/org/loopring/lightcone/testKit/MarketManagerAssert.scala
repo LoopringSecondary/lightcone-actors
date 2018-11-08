@@ -47,3 +47,15 @@ case class MarketManagerAsksVolumeAssert(volumeExpect: Amount, sizeExpect: Int)(
     volume == volumeExpect && marketManager.asks.size == sizeExpect
   }
 }
+
+case class MarketManagerOrderPendingAmountAssert(amountSExpect: Amount, orderId: ID)(implicit pendingRingPool: PendingRingPool) extends Assert {
+  def assert() = {
+    amountSExpect == pendingRingPool.getOrderPendingAmountS(orderId)
+  }
+}
+
+case class MarketManagerOrderPendingRingAssert(ringId: ID)(implicit pendingRingPool: PendingRingPool) extends Assert {
+  def assert() = {
+    pendingRingPool.hasRing(ringId)
+  }
+}
