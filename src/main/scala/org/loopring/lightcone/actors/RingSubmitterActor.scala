@@ -20,7 +20,7 @@ import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.lib.{ Order ⇒ LOrder, Ring ⇒ LRing }
+import org.loopring.lightcone.lib.{ Order ⇒ LOrder, Ring ⇒ LRing, _ }
 
 import scala.annotation.tailrec
 import scala.concurrent._
@@ -36,7 +36,7 @@ class RingSubmitterActor(
   extends RepeatedJobActor
   with ActorLogging {
   //防止一个tx中的订单过多，超过 gaslimit
-  val maxRingsInOneTx = 5
+  val maxRingsInOneTx = 10
 
   val ringSubmitter = new RingSubmitterImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
 
@@ -51,9 +51,9 @@ class RingSubmitterActor(
       val lRings = generateLRing(req.rings)
       lRings.foreach {
         lRing ⇒
-        //          val inputData = ringSubmitter.generateInputData(lRing)
-        //          val txData = ringSubmitter.generateTxData(inputData)
-        //          ethereumAccessActor ! SendRawTransaction(txData)
+          val inputData = ringSubmitter.generateInputData(lRing)
+          val txData = ringSubmitter.generateTxData(inputData)
+          ethereumAccessActor ! SendRawTransaction(txData)
       }
   }
 
