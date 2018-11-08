@@ -46,7 +46,8 @@ class RingSubmitterActor(
     id = 1,
     name = "resubmitTx",
     scheduleDelay = 120 * 1000,
-    callMethod = resubmitTx _)
+    callMethod = resubmitTx _
+  )
 
   initAndStartNextRound(resubmitJob)
 
