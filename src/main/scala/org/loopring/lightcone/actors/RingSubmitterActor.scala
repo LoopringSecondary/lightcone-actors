@@ -31,14 +31,15 @@ class RingSubmitterActor(
     implicit
     routers: Routers,
     ec: ExecutionContext,
-    timeout: Timeout
+    timeout: Timeout,
+    nonceProvider: NonceProvider
 )
   extends RepeatedJobActor
   with ActorLogging {
   //防止一个tx中的订单过多，超过 gaslimit
   val maxRingsInOneTx = 10
 
-  val ringSubmitter = new RingSubmitterImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
+  val ringSigner = new RingSignerImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
 
   def ethereumAccessActor = routers.getEthAccessActor
 
@@ -56,8 +57,8 @@ class RingSubmitterActor(
       val lRings = generateLRing(req.rings)
       lRings.foreach {
         lRing ⇒
-          val inputData = ringSubmitter.generateInputData(lRing)
-          val txData = ringSubmitter.generateTxData(inputData)
+          val inputData = ringSigner.generateInputData(lRing)
+          val txData = ringSigner.generateTxData(inputData)
           ethereumAccessActor ! SendRawTransaction(txData)
       }
   }
@@ -68,7 +69,7 @@ class RingSubmitterActor(
     val inputDataList = Seq.empty[String]
     inputDataList.foreach {
       inputData ⇒
-        val txData = ringSubmitter.generateTxData(inputData)
+        val txData = ringSigner.generateTxData(inputData)
         ethereumAccessActor ! SendRawTransaction(txData)
     }
     Future.successful(Unit)
@@ -82,8 +83,8 @@ class RingSubmitterActor(
       }
       val (toSubmit, remained) = rings.splitAt(maxRingsInOneTx)
       var lRing = LRing(
-        ringSubmitter.getSubmitterAddress(),
-        ringSubmitter.getSubmitterAddress(),
+        ringSigner.getSignerAddress(),
+        ringSigner.getSignerAddress(),
         "",
         Seq.empty[Seq[Int]],
         Seq.empty[LOrder],
