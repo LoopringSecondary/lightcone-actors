@@ -42,7 +42,11 @@ class RingSubmitterActor(
 
   def ethereumAccessActor = routers.getEthAccessActor
 
-  val resubmitJob = Job(id = 1, name = "resubmitTx", scheduleDelay = 120 * 1000, callMethod = resubmitTx _)
+  val resubmitJob = Job(
+    id = 1,
+    name = "resubmitTx",
+    scheduleDelay = 120 * 1000,
+    callMethod = resubmitTx _)
 
   initAndStartNextRound(resubmitJob)
 
