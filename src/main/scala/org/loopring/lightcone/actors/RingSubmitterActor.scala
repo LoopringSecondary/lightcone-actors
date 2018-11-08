@@ -20,7 +20,9 @@ import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
+import org.loopring.lightcone.lib.{ Order ⇒ LOrder, Ring ⇒ LRing }
 
+import scala.annotation.tailrec
 import scala.concurrent._
 
 class RingSubmitterActor(
@@ -33,6 +35,8 @@ class RingSubmitterActor(
 )
   extends RepeatedJobActor
   with ActorLogging {
+  //防止一个tx中的订单过多，超过 gaslimit
+  val maxRingsInOneTx = 5
 
   val ringSubmitter = new RingSubmitterImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
 
@@ -44,11 +48,12 @@ class RingSubmitterActor(
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: SubmitRingReq ⇒
-      val inputDatas = ringSubmitter.generateInputData(req.rings)
-      inputDatas.foreach {
-        inputData ⇒
-          val txData = ringSubmitter.generateTxData(inputData)
-          ethereumAccessActor ! SendRawTransaction(txData)
+      val lRings = generateLRing(req.rings)
+      lRings.foreach {
+        lRing ⇒
+        //          val inputData = ringSubmitter.generateInputData(lRing)
+        //          val txData = ringSubmitter.generateTxData(inputData)
+        //          ethereumAccessActor ! SendRawTransaction(txData)
       }
   }
 
@@ -63,4 +68,44 @@ class RingSubmitterActor(
     }
     Future.successful(Unit)
   }
+
+  private def generateLRing(rings: Seq[Ring]): Seq[LRing] = {
+    @tailrec
+    def generateRingRec(rings: Seq[Ring], res: Seq[LRing]): Seq[LRing] = {
+      if (rings.isEmpty) {
+        return res
+      }
+      val (toSubmit, remained) = rings.splitAt(maxRingsInOneTx)
+      var lRing = LRing(
+        ringSubmitter.getSubmitterAddress(),
+        ringSubmitter.getSubmitterAddress(),
+        "",
+        Seq.empty[Seq[Int]],
+        Seq.empty[LOrder],
+        ""
+      )
+      val orders = rings.flatMap {
+        ring ⇒
+          Set(ring.getMaker.getOrder, ring.getTaker.getOrder)
+      }.distinct
+      val orderIndexes = rings.map {
+        ring ⇒
+          Seq(
+            orders.indexOf(ring.getTaker.getOrder),
+            orders.indexOf(ring.getMaker.getOrder)
+          )
+      }
+      lRing = lRing.copy(
+        //        orders = orders.map(convertToLOrder), //todo:
+        ringOrderIndex = orderIndexes
+      )
+      generateRingRec(remained, res :+ lRing)
+    }
+
+    generateRingRec(rings, Seq.empty[LRing])
+  }
+
+  //todo:need to get From db
+  private def convertToLOrder(order: Order): LOrder = ???
+
 }

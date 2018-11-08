@@ -16,8 +16,23 @@
 
 package org.loopring.lightcone.actors
 
-trait RingSubmitter {
-  def generateInputData(rings: Seq[Ring]): Seq[String]
-  def generateTxData(inputData: String): Array[Byte]
-  def getSubmitterAddress(): String
+import akka.actor.ActorRef
+import org.loopring.lightcone.actors.helper._
+import org.loopring.lightcone.core._
+import org.scalatest._
+
+class RingSubmitterSpec extends FlatSpec with Matchers {
+  val submitterActor: ActorRef = routes.getRingSubmitterActor
+
+  info("[sbt actors/'testOnly *RingSubmitterSpec -- -z submitSingleRing']")
+  "submitSingleRing" should "send one tx to EthAccessActor" in {
+    val order1 = ExpectedFill()
+    val order2 = ExpectedFill()
+    val ring = Ring(
+      maker = Some(order1),
+      taker = Some(order2)
+    )
+    submitterActor ! SubmitRingReq(Seq(ring))
+    Thread.sleep(1000)
+  }
 }
