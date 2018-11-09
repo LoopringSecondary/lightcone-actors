@@ -16,11 +16,14 @@
 
 package org.loopring.lightcone.actors
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import akka.pattern.ask
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.lib.{ Order ⇒ LOrder, Ring ⇒ LRing, _ }
+import org.loopring.lightcone.lib.{Order ⇒ LOrder, Ring ⇒ LRing, _}
 
 import scala.annotation.tailrec
 import scala.concurrent._
@@ -32,13 +35,12 @@ class RingSubmitterActor(
     routers: Routers,
     ec: ExecutionContext,
     timeout: Timeout,
-    nonceProvider: NonceProvider
 )
   extends RepeatedJobActor
   with ActorLogging {
   //防止一个tx中的订单过多，超过 gaslimit
   val maxRingsInOneTx = 10
-
+  var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
 
   def ethereumAccessActor = routers.getEthAccessActor
@@ -54,24 +56,31 @@ class RingSubmitterActor(
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: SubmitRingReq ⇒
-      val lRings = generateLRing(req.rings)
-      lRings.foreach {
-        lRing ⇒
-          val inputData = ringSigner.generateInputData(lRing)
-          val txData = ringSigner.generateTxData(inputData)
-          ethereumAccessActor ! SendRawTransaction(txData)
+      val rings = generateLRing(req.rings)
+      rings.foreach {
+        ring ⇒
+          val inputData = ringSigner.generateInputData(ring)
+          signAndSubmitTx(inputData)
       }
+  }
+
+  def signAndSubmitTx(inputData: String) = {
+    var hasSended = false
+    //todo:
+    while (!hasSended) {
+      val txData = ringSigner.generateTxData(inputData, nonce.get());
+      val sendFuture = ethereumAccessActor ? SendRawTransaction(txData)
+      val res = Await.result(sendFuture, timeout.duration)
+      nonce.getAndIncrement()
+      hasSended = true
+    }
   }
 
   //未被提交的交易需要使用新的gas和gasprice重新提交再次提交
   def resubmitTx(): Future[Unit] = {
     //todo：查询数据库等得到为能及时打块的交易
     val inputDataList = Seq.empty[String]
-    inputDataList.foreach {
-      inputData ⇒
-        val txData = ringSigner.generateTxData(inputData)
-        ethereumAccessActor ! SendRawTransaction(txData)
-    }
+    inputDataList.foreach(signAndSubmitTx)
     Future.successful(Unit)
   }
 

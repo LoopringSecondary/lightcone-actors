@@ -21,7 +21,6 @@ import akka.util.Timeout
 import akka.pattern.ask
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core._
-import org.loopring.lightcone.lib.SimpleNonceProvider
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -53,7 +52,6 @@ package object helper {
   r.marketManagingActors = Map(
     marketId.ID → system.actorOf(Props(newMarketManager()), "market-manager-lrc-eth")
   )
-  implicit val nonceProvider = new SimpleNonceProvider()
   r.ringSubmitterActor = system.actorOf(Props(new RingSubmitterActor("0xa")))
   implicit val routes: Routers = r
 
