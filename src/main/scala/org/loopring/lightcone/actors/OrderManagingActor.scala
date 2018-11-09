@@ -20,22 +20,30 @@ import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+import org.loopring.lightcone.actors.routing.Routers
 import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
+import org.loopring.lightcone.proto.deployment.OrderManagerSettings
+
 import scala.concurrent.{ ExecutionContext, Future }
+
+object OrderManagingActor
+  extends base.Deployable[OrderManagerSettings] {
+  val name = "order_managing_actor"
+
+  def getCommon(s: OrderManagerSettings) =
+    base.CommonSettings(None, s.roles, s.instances)
+}
 
 class OrderManagingActor(
     owner: Address
 )(
     implicit
     dustOrderEvaluator: DustOrderEvaluator,
-    routes: Routers,
     ec: ExecutionContext,
     timeout: Timeout
 )
   extends Actor
   with ActorLogging {
-
-  val ethereumAccessActor = routes.getEthAccessActor
 
   implicit val orderPool = new OrderPoolImpl
   val updatedOrderReceiver = new UpdatedOrderReceiver()
@@ -112,7 +120,7 @@ class OrderManagingActor(
       Future.successful(manager.getTokenManager(token))
     } else {
       val tm = manager.addTokenManager(new TokenManager(token, 10000))
-      (ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, Seq(token)))
+      (Routers.ethereumAccessActor ? GetBalanceAndAllowancesReq(owner, Seq(token)))
         .mapTo[GetBalanceAndAllowancesRes].map(_.balanceAndAllowanceMap(token)).map {
           ba ⇒
             tm.init(ba.balance, ba.allowance)
@@ -123,10 +131,7 @@ class OrderManagingActor(
 
   private def tellMarketManager(order: COrder) = {
     val marketId = MarketId(order.tokenS, order.tokenB)
-    val marketOpt = routes.getMarketManagingActor(marketId)
-    assert(marketOpt.nonEmpty)
-    val market = marketOpt.get
-    market ! SubmitOrderReq(Some(order.toProto()))
+    Routers.marketManagingActor ! SubmitOrderReq(Some(order.toProto()))
   }
 
   implicit private def orderStatus2ErrorCode(status: OrderStatus): ErrorCode = status match {

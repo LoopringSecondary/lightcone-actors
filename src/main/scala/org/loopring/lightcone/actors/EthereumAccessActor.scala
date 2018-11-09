@@ -18,9 +18,18 @@ package org.loopring.lightcone.actors
 
 import akka.actor._
 import akka.event.LoggingReceive
-import akka.pattern.ask
 import akka.util.Timeout
+import org.loopring.lightcone.proto.deployment.EthereumAccessorSettings
+
 import scala.concurrent.{ ExecutionContext, Future }
+
+object EthereumAccessActor
+  extends base.Deployable[EthereumAccessorSettings] {
+  val name = "ethereum_access_actor"
+
+  def getCommon(s: EthereumAccessorSettings) =
+    base.CommonSettings(None, s.roles, s.instances)
+}
 
 class EthereumAccessActor()(
     implicit

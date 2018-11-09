@@ -16,30 +16,33 @@
 
 package org.loopring.lightcone.actors
 
-import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout
-import com.google.protobuf.ByteString
-import org.loopring.lightcone.core.MarketManager
 import scala.concurrent.ExecutionContext
+import akka.actor._
+import org.loopring.lightcone.actors.routing.Routers
+import akka.cluster.pubsub._
+import akka.cluster.pubsub.DistributedPubSubMediator._
+import scala.concurrent.duration._
+import com.typesafe.config.Config
+import org.loopring.lightcone.actors.routing._
+import org.loopring.lightcone.proto.deployment._
 
-class RingSubmitterActor(
-    submitter: Address
-)(
-    implicit
-    routers: Routers,
+object ClusterManager extends base.NullConfigDeployable {
+  val name = "cluster_manager"
+  override val isSingleton = true
+}
+
+class ClusterManager()(implicit
     ec: ExecutionContext,
     timeout: Timeout
 )
-  extends Actor
-  with ActorLogging {
+  extends Actor {
 
-  val ethereumAccessActor = routers.getEthAccessActor
-
+  val mediator = DistributedPubSub(context.system).mediator
   def receive: Receive = {
-    case req: SubmitRingReq ⇒
-      //todo:生成ring数据、签名以及生成rawtransction
-      val data = ByteString.copyFromUtf8(req.rings.toString())
-      ethereumAccessActor ! SendRawTransaction(data)
-  }
 
+    case UploadDynamicSettings(c) ⇒
+      println("UploadDynamicSettings: " + c)
+      mediator ! Publish("cluster_manager", ProcessDynamicSettings(c))
+  }
 }

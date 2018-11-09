@@ -9,7 +9,8 @@ lazy val actors = (project in file("."))
   .enablePlugins(JavaAppPackaging)
   .settings(
     basicSettings,
-    libraryDependencies ++= commonDependency)
+    libraryDependencies ++= commonDependency,
+    libraryDependencies ++= akkaDependency)
   .settings(
     PB.targets in Compile := Seq(
       scalapb.gen(flatPackage = false) -> (sourceManaged in Compile).value))

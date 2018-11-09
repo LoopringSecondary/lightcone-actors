@@ -17,12 +17,22 @@
 package org.loopring.lightcone.actors
 
 import org.loopring.lightcone.core._
-import com.google.protobuf.ByteString
 import akka.actor._
-import akka.event.{ Logging, LoggingReceive }
+import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
+import org.loopring.lightcone.actors.routing.Routers
+import org.loopring.lightcone.proto.deployment.OrderFillSettings
+
 import scala.concurrent.{ ExecutionContext, Future }
+
+object OrderFillHistoryActor
+  extends base.Deployable[OrderFillSettings] {
+  val name = "order_fill_history_actor"
+
+  def getCommon(s: OrderFillSettings) =
+    base.CommonSettings(None, s.roles, s.instances)
+}
 
 class OrderFillHistoryActor()(
     implicit
@@ -32,12 +42,9 @@ class OrderFillHistoryActor()(
   extends Actor
   with ActorLogging {
 
-  val orderManagignActor: ActorRef = ???
-  val ethereumAccessActor: ActorRef = ???
-
   def receive() = LoggingReceive {
-    case req: GetFilledAmountReq    ⇒ ethereumAccessActor forward req
-    case req: UpdateFilledAmountReq ⇒ ethereumAccessActor forward req
+    case req: GetFilledAmountReq    ⇒ Routers.ethereumAccessActor forward req
+    case req: UpdateFilledAmountReq ⇒ Routers.ethereumAccessActor forward req
 
     case SubmitOrderReq(orderOpt) if orderOpt.isEmpty ⇒
       log.error(s"SubmitOrderReq order with empty order")
@@ -58,13 +65,13 @@ class OrderFillHistoryActor()(
         if (updated.outstanding.amountS <= 0) {
           sender ! SubmitOrderRes(ErrorCode.ORDER_INVALID_AMOUNT_S, None)
         } else {
-          orderManagignActor forward SubmitOrderReq(Some(updated.toProto))
+          Routers.orderManagingActor forward SubmitOrderReq(Some(updated.toProto))
         }
       }
   }
 
   def getFilledAmountAsFuture(orderIds: Seq[String]): Future[Map[String, BigInt]] = {
-    (ethereumAccessActor ? GetFilledAmountReq(orderIds))
+    (Routers.ethereumAccessActor ? GetFilledAmountReq(orderIds))
       .mapTo[GetFilledAmountRes]
       .map(_.filledAmountSMap)
   }
