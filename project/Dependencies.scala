@@ -44,5 +44,6 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE",
     "org.web3j" % "core" % "3.4.0",
-    "org.loopring" %% "lightcone-core" % "0.1.1-SNAPSHOT")
+    "org.loopring" %% "lightcone-core" % "0.1.1-SNAPSHOT",
+    "org.loopring" %% "lightcone-lib" % "0.1.1-SNAPSHOT")
 }
