@@ -19,12 +19,8 @@ package org.loopring.lightcone.actors
 import akka.util.Timeout
 import scala.concurrent.ExecutionContext
 import akka.actor._
-import org.loopring.lightcone.actors.routing.Routers
 import akka.cluster.pubsub._
 import akka.cluster.pubsub.DistributedPubSubMediator._
-import scala.concurrent.duration._
-import com.typesafe.config.Config
-import org.loopring.lightcone.actors.routing._
 import org.loopring.lightcone.proto.deployment._
 
 object ClusterManager extends base.NullConfigDeployable {
