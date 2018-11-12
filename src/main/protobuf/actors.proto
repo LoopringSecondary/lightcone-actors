@@ -176,3 +176,8 @@ message SendRawTransactionRes {
 message SubmitRingReq {
   repeated Ring rings = 1;
 }
+
+message UpdatedTokenBurnRate {
+    string token = 1;
+    double burnRate = 2;
+}
