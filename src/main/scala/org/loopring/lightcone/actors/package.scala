@@ -164,24 +164,6 @@ package object actors {
     )
   }
 
-  implicit class RichDepthEvent(depth: DepthEvent) {
-    def toPojo() = CDepthEvent(
-      depth.orderId,
-      depth.tokenS,
-      depth.tokenB,
-      Rational(depth.amountS, depth.amountB),
-      depth.matchableAmountS
-    )
-  }
-
-  implicit class RichDepthEntry(entry: CDepthEntry) {
-
-    def toProto() = DepthRes.Entry(
-      entry.price,
-      entry.amountS
-    )
-  }
-
   implicit class RichMarketId(src: MarketId) {
 
     def ID: String = tokensToMarketHash(src.primary, src.secondary)

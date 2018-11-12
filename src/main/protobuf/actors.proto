@@ -188,17 +188,15 @@ message DepthEventList {
 message DepthReq {
   double granularity = 1;
   int32 length = 2;
+
+message SendRawTransactionRes {
+    int32 id = 1;
+    string jsonrpc = 2;
+    string result = 3;
 }
 
-message DepthRes {
-  message Entry {
-    double price = 1;
-    bytes amount = 2;
-  }
-
-  repeated Entry asks = 1;
-  repeated Entry bids = 2;
-
+message SubmitRingReq {
+  repeated Ring rings = 1;
 }
 
 // todo eth层路由到某个market对应的actor
