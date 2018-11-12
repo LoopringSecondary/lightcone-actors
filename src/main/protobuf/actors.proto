@@ -153,10 +153,6 @@ message SendRawTransaction {
   bytes data = 1;
 }
 
-message SubmitRingReq {
-  repeated Ring rings = 1;
-}
-
 enum ExecutedStatus {
   EXECUTED_STATUS_UNKNOW = 0;
   EXECUTED_STATUS_FAILED = 1;
@@ -171,24 +167,6 @@ message RingExecutedRes {
   int64 block_number = 5;
 }
 
-message DepthEvent {
-  string order_id = 1;
-  string token_s = 2;
-  string token_b = 3;
-  bytes amount_s = 4;
-  bytes amount_b = 5;
-  bytes matchable_amount_s = 6;
-}
-
-message DepthEventList {
-  repeated DepthEvent events = 1;
-}
-
-// todo rpc层路由到某个market对应的actor
-message DepthReq {
-  double granularity = 1;
-  int32 length = 2;
-
 message SendRawTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
@@ -197,10 +175,4 @@ message SendRawTransactionRes {
 
 message SubmitRingReq {
   repeated Ring rings = 1;
-}
-
-// todo eth层路由到某个market对应的actor
-message LatestMatchPriceEvent {
-  bytes amountS = 1;
-  bytes amountB = 2;
 }
