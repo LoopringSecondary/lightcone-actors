@@ -153,11 +153,11 @@ message SendRawTransaction {
   bytes data = 1;
 }
 
-message SendRawTransactionRes {
-    int32 id = 1;
-    string jsonrpc = 2;
-    string result = 3;
-}
+//message SendRawTransactionRes {
+//    int32 id = 1;
+//    string jsonrpc = 2;
+//    string result = 3;
+//}
 
 message SubmitRingReq {
   repeated Ring rings = 1;

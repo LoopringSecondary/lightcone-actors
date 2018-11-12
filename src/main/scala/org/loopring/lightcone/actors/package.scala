@@ -17,9 +17,9 @@
 package org.loopring.lightcone
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.core.{ MarketId, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, OrderStatus ⇒ COrderStatus, Ring ⇒ CRing }
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.core.{ MarketId, Rational, DepthEntry ⇒ CDepthEntry, DepthOrder ⇒ CDepthEvent, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, OrderStatus ⇒ COrderStatus, Ring ⇒ CRing }
 
 package object actors {
   type Amount = BigInt
