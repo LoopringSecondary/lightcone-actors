@@ -21,7 +21,6 @@ import akka.util.Timeout
 import akka.pattern.ask
 import com.google.protobuf.ByteString
 import org.loopring.lightcone.core._
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
