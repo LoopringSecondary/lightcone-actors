@@ -233,17 +233,18 @@ private[actors] class HttpConnector(node: EthereumProxySettings.Node)(
           case _ ⇒ JsonFormat.fromJsonString[TraceTransactionRes](json)
         }
       } pipeTo sender
-    case r: SendRawTransactionReq ⇒
-      sendMessage("eth_sendRawTransaction") {
-        Seq(r.data)
-      } map { json ⇒
-        (checkResponseWrapped compose toResponseWrapped)(json) match {
-          case true ⇒
-            SendRawTransactionRes().withJsonrpc("2.0")
-              .withError(emptyError)
-          case _ ⇒ JsonFormat.fromJsonString[SendRawTransactionRes](json)
-        }
-      } pipeTo sender
+    // 这里因为 SendRawTransactionReq 在 actors 里面定义 暂时注释掉
+    //    case r: SendRawTransactionReq ⇒
+    //      sendMessage("eth_sendRawTransaction") {
+    //        Seq(r.data)
+    //      } map { json ⇒
+    //        (checkResponseWrapped compose toResponseWrapped)(json) match {
+    //          case true ⇒
+    //            SendRawTransactionRes().withJsonrpc("2.0")
+    //              .withError(emptyError)
+    //          case _ ⇒ JsonFormat.fromJsonString[SendRawTransactionRes](json)
+    //        }
+    //      } pipeTo sender
     case r: GetEstimatedGasReq ⇒
       sendMessage("eth_estimateGas") {
         val args = TransactionParam().withTo(r.to).withData(r.data)

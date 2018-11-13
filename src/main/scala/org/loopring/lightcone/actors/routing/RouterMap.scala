@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.routing
+import akka.actor._
 
-import akka.actor.ActorRef
-import org.loopring.lightcone.core.MarketId
+trait RouterMap {
+  protected def getRouterNamed(name: String, param: String = ""): ActorRef =
+    routers(name)(param)
 
-trait Routers {
+  private var routers: Map[String, Map[String, ActorRef]] = Map.empty
 
-  def getOrderManagingActor(owner: Address): Option[ActorRef]
-  def getMarketManagingActor(marketId: MarketId): Option[ActorRef]
-  def getEthAccessActor: ActorRef
-  def getRingSubmitterActor: ActorRef
-
-  def getEthProxyActor: ActorRef
+  def setRouters(name: String, routerMap: Map[String, ActorRef]) {
+    routers = routers + (name -> routerMap)
+  }
 }

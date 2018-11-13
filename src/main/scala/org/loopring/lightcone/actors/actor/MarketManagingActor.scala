@@ -14,27 +14,37 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
+import org.loopring.lightcone.actors.routing.Routers
+import org.loopring.lightcone.proto.actors.{ OrderStatus ⇒ _, _ }
+import org.loopring.lightcone.core._
+import org.loopring.lightcone.proto.deployment.OrderBookManagerSettings
+import org.loopring.lightcone.actors.base
+
 import scala.concurrent.ExecutionContext
+
+object MarketManagingActor
+  extends base.Deployable[OrderBookManagerSettings] {
+  val name = "market_managing_actor"
+
+  def getCommon(s: OrderBookManagerSettings) =
+    base.CommonSettings(None, s.roles, 1)
+}
 
 class MarketManagingActor(
     manager: MarketManager
 )(
     implicit
-    routes: Routers,
     ec: ExecutionContext,
     timeout: Timeout
 )
   extends Actor
   with ActorLogging {
   var latestGasPrice = 0l
-
-  def ringSubmitterActor = routes.getRingSubmitterActor
 
   def receive() = LoggingReceive {
     case SubmitOrderReq(Some(order)) ⇒
@@ -43,7 +53,7 @@ class MarketManagingActor(
           val res = manager.submitOrder(order.toPojo)
           val rings = res.rings map (_.toProto)
           if (rings.nonEmpty) {
-            ringSubmitterActor ! SubmitRingReq(rings = rings)
+            Routers.ringSubmitActor ! SubmitRingReq(rings = rings)
           }
         case _ ⇒
           manager.deleteOrder(order.toPojo)
@@ -52,7 +62,7 @@ class MarketManagingActor(
     case updatedGasPrce: UpdatedGasPrice ⇒
       if (latestGasPrice > updatedGasPrce.gasPrice) {
         val res = manager.triggerMatch()
-        ringSubmitterActor ! SubmitRingReq(rings = res.rings map (_.toProto))
+        Routers.ringSubmitActor ! SubmitRingReq(rings = res.rings map (_.toProto))
       }
       latestGasPrice = updatedGasPrce.gasPrice
 

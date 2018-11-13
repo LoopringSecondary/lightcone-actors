@@ -14,25 +14,36 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
-import akka.util.Timeout
 import akka.pattern.ask
+import akka.util.Timeout
 import org.loopring.lightcone.actors.base._
-import org.loopring.lightcone.lib.{Order ⇒ LOrder, Ring ⇒ LRing, _}
+import org.loopring.lightcone.actors.routing.Routers
+import org.loopring.lightcone.proto.actors.{Order, SubmitRingReq, Ring, SendRawTransaction}
+import org.loopring.lightcone.lib.{Order => LOrder, Ring => LRing, _}
+import org.loopring.lightcone.proto.deployment.RingSubmitterSettings
+import org.loopring.lightcone.actors.base
 
 import scala.annotation.tailrec
-import scala.concurrent._
+import scala.concurrent.{ExecutionContext, _}
 
-class RingSubmitterActor(
+object RingSubmitActor
+  extends base.Deployable[RingSubmitterSettings] {
+  val name = "ring_submit_actor"
+
+  def getCommon(s: RingSubmitterSettings) =
+    base.CommonSettings(None, Seq(), 1)
+}
+
+class RingSubmitActor(
     submitter: Address
 )(
     implicit
-    routers: Routers,
     ec: ExecutionContext,
     timeout: Timeout,
 )
@@ -42,17 +53,6 @@ class RingSubmitterActor(
   val maxRingsInOneTx = 10
   var nonce = new AtomicInteger(0)
   val ringSigner = new RingSignerImpl(privateKey = "0x1") //todo:submitter，protocol，privatekey
-
-  def ethereumAccessActor = routers.getEthAccessActor
-
-  val resubmitJob = Job(
-    id = 1,
-    name = "resubmitTx",
-    scheduleDelay = 120 * 1000,
-    callMethod = resubmitTx _
-  )
-
-  initAndStartNextRound(resubmitJob)
 
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: SubmitRingReq ⇒
@@ -69,11 +69,12 @@ class RingSubmitterActor(
     //todo:
     while (!hasSended) {
       val txData = ringSigner.generateTxData(inputData, nonce.get());
-      val sendFuture = ethereumAccessActor ? SendRawTransaction(txData)
+      val sendFuture = Routers.ethereumAccessActor ? SendRawTransaction(txData)
       val res = Await.result(sendFuture, timeout.duration)
       nonce.getAndIncrement()
       hasSended = true
     }
+
   }
 
   //未被提交的交易需要使用新的gas和gasprice重新提交再次提交
