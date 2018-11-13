@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import akka.actor._
 import akka.util.Timeout
+import org.loopring.lightcone.proto.actors.RingExecutedRes
+import org.loopring.lightcone.actors.routing.Routers
 import org.loopring.lightcone.core.MarketId
 
 import scala.concurrent.ExecutionContext
@@ -32,7 +34,6 @@ import scala.concurrent.ExecutionContext
  */
 class RingExecutedStatusActor()(
     implicit
-    routes: Routers,
     ec: ExecutionContext,
     timeout: Timeout
 )
@@ -51,7 +52,7 @@ class RingExecutedStatusActor()(
       }
       marketIdOpt foreach {
         id ⇒
-          val marketManagerActorOpt = routes.getMarketManagingActor(id)
+          val marketManagerActorOpt = Routers.getMarketManagingActor(id.toString)
           marketManagerActorOpt.foreach(_ ! req)
       }
   }
