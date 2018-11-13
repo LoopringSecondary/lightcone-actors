@@ -32,6 +32,7 @@ class TokenValueSyncActor()(
 )
   extends RepeatedJobActor
   with ActorLogging {
+
   val resubmitJob = Job(
     id = 1,
     name = "syncTokenValue",
@@ -41,14 +42,14 @@ class TokenValueSyncActor()(
 
   initAndStartNextRound(resubmitJob)
 
-  //todo：初始化
+  //todo：如何初始化
   override def receive: Receive = super.receive orElse LoggingReceive {
     case req: UpdatedTokenBurnRate ⇒ tokenValueEstimator.burnRates += req.token → req.burnRate
   }
 
-  def syncMarketCap(): Future[Unit] = {
+  def syncMarketCap: Future[Unit] = {
     //todo:测试暂不实现，需要实现获取token以及marketcap的方法
-    Future.successful()
+    Future.successful(Unit)
   }
 
 }
