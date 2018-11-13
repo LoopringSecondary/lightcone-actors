@@ -14,31 +14,33 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.managing
 
 import akka.actor._
-import akka.event.LoggingReceive
-import akka.pattern.ask
+import akka.cluster.pubsub.DistributedPubSubMediator._
+import akka.cluster.pubsub._
 import akka.util.Timeout
-import scala.concurrent.{ ExecutionContext, Future }
+import org.loopring.lightcone.actors.base
+import org.loopring.lightcone.proto.deployment._
 
-class EthereumAccessActor()(
-    implicit
+import scala.concurrent.ExecutionContext
+
+object ClusterManager extends base.NullConfigDeployable {
+  val name = "cluster_manager"
+  override val isSingleton = true
+}
+
+class ClusterManager()(implicit
     ec: ExecutionContext,
     timeout: Timeout
 )
-  extends Actor
-  with ActorLogging {
+  extends Actor {
 
-  def receive() = LoggingReceive {
-    case GetBalanceAndAllowancesReq(address, tokens) ⇒
-      val map_ = tokens.map { token ⇒
-        // TODO: query Etherem and get the results.
-        val balance: BigInt = 0;
-        val allowance: BigInt = 0;
-        token -> BalanceAndAllowance(balance, allowance)
-      }.toMap
+  val mediator = DistributedPubSub(context.system).mediator
+  def receive: Receive = {
 
-      sender ! GetBalanceAndAllowancesRes(address, map_)
+    case UploadDynamicSettings(c) ⇒
+      println("UploadDynamicSettings: " + c)
+      mediator ! Publish("cluster_manager", ProcessDynamicSettings(c))
   }
 }
