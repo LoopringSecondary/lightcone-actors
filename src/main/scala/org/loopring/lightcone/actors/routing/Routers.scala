@@ -17,7 +17,8 @@
 package org.loopring.lightcone.actors.routing
 
 import akka.actor.ActorRef
-import org.loopring.lightcone.actors._
+import org.loopring.lightcone.actors.actor._
+import org.loopring.lightcone.actors.managing.ClusterManager
 
 object Routers extends RouterMap {
   // // Router for management actors
@@ -29,5 +30,6 @@ object Routers extends RouterMap {
   def orderFillHistoryActor: ActorRef = getRouterNamed(OrderFillHistoryActor.name)
   def orderManagingActor: ActorRef = getRouterNamed(OrderManagingActor.name)
   def ringSubmitActor: ActorRef = getRouterNamed(RingSubmitActor.name)
+  def getMarketManagingActor(market: String): Option[ActorRef] = ???
 
 }

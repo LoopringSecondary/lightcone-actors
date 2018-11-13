@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone
+package org.loopring.lightcone.actors
 
 import com.google.protobuf.ByteString
+import org.loopring.lightcone.proto.actors._
+import org.loopring.lightcone.core.MarketId
 import org.web3j.crypto.Hash
 import org.web3j.utils.Numeric
-import org.loopring.lightcone.core.{ MarketId, Rational, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, OrderStatus ⇒ COrderStatus, Ring ⇒ CRing }
+import org.loopring.lightcone.core.{ MarketId, ExpectedFill ⇒ CExpectedFill, Order ⇒ COrder, OrderState ⇒ COrderState, OrderStatus ⇒ COrderStatus, Ring ⇒ CRing }
 
-package object actors {
+package object actor {
   type Amount = BigInt
   type Address = String
   type ID = String
@@ -152,8 +154,15 @@ package object actors {
 
   implicit class RichCRing(ring: CRing) {
     def toProto(): Ring = Ring(
-      Some(ring.maker.toProto()),
-      Some(ring.taker.toProto())
+      Some(ring.maker.toProto),
+      Some(ring.taker.toProto)
+    )
+  }
+
+  implicit class RichRing(ring: Ring) {
+    def toPojo(): CRing = CRing(
+      ring.getMaker.toPojo,
+      ring.getTaker.toPojo
     )
   }
 

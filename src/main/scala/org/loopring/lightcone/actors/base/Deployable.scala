@@ -26,7 +26,7 @@ import com.typesafe.config.Config
 import org.loopring.lightcone.proto.deployment._
 import akka.event.Logging
 import com.google.inject._
-import org.loopring.lightcone.actors.ActorUtil._
+import org.loopring.lightcone.actors.utils.ActorUtil._
 
 abstract class Deployable[S <: AnyRef] {
   val name: String

@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.managing
 
-import akka.util.Timeout
-import scala.concurrent.ExecutionContext
 import akka.actor._
-import akka.cluster.pubsub._
 import akka.cluster.pubsub.DistributedPubSubMediator._
+import akka.cluster.pubsub._
+import akka.util.Timeout
+import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.proto.deployment._
+
+import scala.concurrent.ExecutionContext
 
 object ClusterManager extends base.NullConfigDeployable {
   val name = "cluster_manager"

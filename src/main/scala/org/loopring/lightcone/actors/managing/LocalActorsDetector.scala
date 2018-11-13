@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.managing
+package org.loopring.lightcone.actors.managing
 
 import akka.actor._
 import scala.concurrent.duration._

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.managing
+package org.loopring.lightcone.actors.managing
 
 import akka.pattern.{ ask, pipe }
 import akka.util.Timeout

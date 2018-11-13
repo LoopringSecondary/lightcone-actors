@@ -16,19 +16,23 @@
 
 package org.loopring.lightcone.actors
 
-import com.google.inject._
-import net.codingwell.scalaguice._
-import com.google.inject.name._
-import akka.actor._
+import akka.actor.ActorRef
+import org.loopring.lightcone.actors.helper._
+import org.loopring.lightcone.core._
+import org.scalatest._
 
-object ActorUtil {
-  implicit class ActorInjector(injector: Injector) {
-    def getActor(name: String): ActorRef = {
-      injector.getInstance(Key.get(classOf[ActorRef], Names.named(name)))
-    }
+class RingSubmitterSpec extends FlatSpec with Matchers {
+  val submitterActor: ActorRef = routes.getRingSubmitterActor
 
-    def getProps(name: String): Props = {
-      injector.getInstance(Key.get(classOf[Props], Names.named(name)))
-    }
+  info("[sbt actors/'testOnly *RingSubmitterSpec -- -z submitSingleRing']")
+  "submitSingleRing" should "send one tx to EthAccessActor" in {
+    val order1 = ExpectedFill()
+    val order2 = ExpectedFill()
+    val ring = Ring(
+      maker = Some(order1),
+      taker = Some(order2)
+    )
+    submitterActor ! SubmitRingReq(Seq(ring))
+    Thread.sleep(1000)
   }
 }

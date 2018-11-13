@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import org.loopring.lightcone.proto.actors.{ BalanceAndAllowance, GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes }
 import org.loopring.lightcone.proto.deployment.EthereumAccessorSettings
+import org.loopring.lightcone.actors.base
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
 
 object EthereumAccessActor
   extends base.Deployable[EthereumAccessorSettings] {

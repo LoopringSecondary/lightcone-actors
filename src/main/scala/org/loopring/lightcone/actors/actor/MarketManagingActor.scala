@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.util.Timeout
 import org.loopring.lightcone.actors.routing.Routers
-import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
+import org.loopring.lightcone.proto.actors.{ OrderStatus ⇒ _, _ }
+import org.loopring.lightcone.core._
 import org.loopring.lightcone.proto.deployment.OrderBookManagerSettings
+import org.loopring.lightcone.actors.base
 
 import scala.concurrent.ExecutionContext
 
@@ -63,6 +65,10 @@ class MarketManagingActor(
         Routers.ringSubmitActor ! SubmitRingReq(rings = res.rings map (_.toProto))
       }
       latestGasPrice = updatedGasPrce.gasPrice
+
+    case req: RingExecutedRes ⇒
+      val ringOpt = req.ring.map(_.toPojo)
+      ringOpt.foreach(manager.deletePendingRing)
   }
 
 }

@@ -25,6 +25,8 @@ import akka.util.Timeout
 import org.loopring.lightcone.core.{ DustOrderEvaluator, DustOrderEvaluatorImpl, MarketManager, MarketManagerImpl, TimeProvider }
 import akka.http.scaladsl.model._
 import akka.http.scaladsl._
+import org.loopring.lightcone.actors.actor._
+import org.loopring.lightcone.actors.managing.ClusterManager
 //import slick.basic.DatabaseConfig
 //import slick.jdbc.JdbcProfile
 import com.google.inject._

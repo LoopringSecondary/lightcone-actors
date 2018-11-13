@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import akka.actor._
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import org.loopring.lightcone.actors.routing.Routers
+import org.loopring.lightcone.proto.actors.{ CancelOrderReq, CancelOrderRes, ErrorCode, GetBalanceAndAllowancesReq, GetBalanceAndAllowancesRes, OrderStatus, SubmitOrderReq, SubmitOrderRes, UpdateBalanceAndAllowanceReq, UpdateBalanceAndAllowanceRes, UpdateFilledAmountReq, UpdateFilledAmountRes }
 import org.loopring.lightcone.core.{ Order ⇒ COrder, _ }
 import org.loopring.lightcone.proto.deployment.OrderManagerSettings
+import org.loopring.lightcone.actors.base
 
 import scala.concurrent.{ ExecutionContext, Future }
 

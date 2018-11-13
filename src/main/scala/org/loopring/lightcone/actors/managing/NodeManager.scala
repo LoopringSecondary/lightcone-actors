@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.managing
+package org.loopring.lightcone.actors.managing
 
 import akka.pattern._
 import akka.util.Timeout
 import akka.actor._
 import akka.cluster._
 import akka.stream.ActorMaterializer
-
 import com.typesafe.config.Config
 
 import scala.concurrent.duration._
-import org.loopring.lightcone.actors._
+import org.loopring.lightcone.actors.actor._
 import akka.cluster.pubsub._
 import akka.cluster.pubsub.DistributedPubSubMediator._
 import org.loopring.lightcone.proto.deployment._
 import org.loopring.lightcone.actors.routing._
 import com.google.inject._
-import org.loopring.lightcone.actors.ClusterManager
+import org.loopring.lightcone.actors.actor.OrderManagingActor
 
 @Singleton
 class NodeManager(

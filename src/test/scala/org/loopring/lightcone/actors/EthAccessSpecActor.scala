@@ -19,6 +19,7 @@ package org.loopring.lightcone.actors
 import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout
 import scala.concurrent.ExecutionContext
+import org.web3j.utils.Numeric
 
 object OnChainAccounts {
   var map = Map[Address, Map[String, BalanceAndAllowance]]()
@@ -45,6 +46,6 @@ class EthAccessSpecActor()(
       )
     case req: SendRawTransaction ⇒
       //todo：测试，只是打印下
-      println("received raw transaction:", req.data.toStringUtf8)
+      println("received raw transaction:", Numeric.toHexString(req.data.toByteArray))
   }
 }

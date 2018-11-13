@@ -17,7 +17,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "org.loopring.lightcone";
+option java_package = "org.loopring.lightcone.proto";
 package org.loopring.lightcone;
 
 message OrderState {
@@ -153,6 +153,20 @@ message SendRawTransaction {
   bytes data = 1;
 }
 
+enum ExecutedStatus {
+  EXECUTED_STATUS_UNKNOW = 0;
+  EXECUTED_STATUS_FAILED = 1;
+  EXECUTED_STATUS_SUCCESS = 2;
+}
+
+message RingExecutedRes {
+  Ring ring = 1;
+  string tx_hash = 2;
+  ExecutedStatus status = 3;
+  bytes used_gas = 4;
+  int64 block_number = 5;
+}
+
 message SendRawTransactionRes {
     int32 id = 1;
     string jsonrpc = 2;
@@ -161,10 +175,4 @@ message SendRawTransactionRes {
 
 message SubmitRingReq {
   repeated Ring rings = 1;
-}
-
-// todo eth层路由到某个market对应的actor
-message LatestMatchPriceEvent {
-  bytes amountS = 1;
-  bytes amountB = 2;
 }

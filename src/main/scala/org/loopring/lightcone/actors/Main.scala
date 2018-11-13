@@ -102,7 +102,7 @@ object Main {
           .withFallback(fallback)
 
         // Deploying NodeManager
-        import ActorUtil._
+        import org.loopring.lightcone.actors.utils.ActorUtil._
         val injector = Guice.createInjector(new CoreModule(config))
 
         //        injector.getActor("ethereum_access_actor")
