@@ -14,42 +14,29 @@
  * limitations under the License.
  */
 
-package org.loopring.lightcone.actors
+package org.loopring.lightcone.actors.actor
 
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
-import org.loopring.lightcone.actors.base.{ Job, RepeatedJobActor }
-import org.loopring.lightcone.core.TokenValueEstimatorImpl
+import org.loopring.lightcone.actors.base.RepeatedJobActor
+import org.loopring.lightcone.core.GasPriceProvider
+import org.loopring.lightcone.proto.actors.UpdatedGasPrice
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.ExecutionContext
 
-class TokenValueSyncActor()(
+class GasPriceSyncActor()(
     implicit
-    val tokenValueEstimator: TokenValueEstimatorImpl,
+    val gasPriceProvider: GasPriceProvider,
     ec: ExecutionContext,
     timeout: Timeout
 )
   extends RepeatedJobActor
   with ActorLogging {
 
-  val resubmitJob = Job(
-    id = 1,
-    name = "syncTokenValue",
-    scheduleDelay = 5 * 60 * 1000,
-    callMethod = syncMarketCap _
-  )
-
-  initAndStartNextRound(resubmitJob)
-
-  //todo：如何初始化
+  //todo：初始化
   override def receive: Receive = super.receive orElse LoggingReceive {
-    case req: UpdatedTokenBurnRate ⇒ tokenValueEstimator.burnRates += req.token → req.burnRate
-  }
-
-  def syncMarketCap: Future[Unit] = {
-    //todo:测试暂不实现，需要实现获取token以及marketcap的方法
-    Future.successful(Unit)
+    case req: UpdatedGasPrice ⇒ gasPriceProvider.setGasPrice(req.gasPrice)
   }
 
 }
