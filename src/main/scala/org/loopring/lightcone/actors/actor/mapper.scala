@@ -17,6 +17,7 @@
 package org.loopring.lightcone.actors
 
 import com.google.protobuf.ByteString
+
 import org.loopring.lightcone.proto.actors._
 import org.loopring.lightcone.core.MarketId
 import org.web3j.crypto.Hash

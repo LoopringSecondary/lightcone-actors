@@ -16,33 +16,32 @@
 
 package org.loopring.lightcone.actors
 
-import java.util.concurrent.ForkJoinPool
-
 import akka.actor._
-import akka.cluster._
+import akka.cluster.Cluster
+import com.google.inject.name.Named
+import com.google.inject.{ AbstractModule, Inject, Provides }
+import net.codingwell.scalaguice.ScalaModule
+//import akka.cluster._
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import org.loopring.lightcone.core.{ DustOrderEvaluator, DustOrderEvaluatorImpl, MarketManager, MarketManagerImpl, TimeProvider }
-import akka.http.scaladsl.model._
-import akka.http.scaladsl._
 import org.loopring.lightcone.actors.actor._
 import org.loopring.lightcone.actors.managing.ClusterManager
+import org.loopring.lightcone.core.{ DustOrderEvaluator, DustOrderEvaluatorImpl, MarketManager, MarketManagerImpl }
 //import slick.basic.DatabaseConfig
 //import slick.jdbc.JdbcProfile
-import com.google.inject._
-import com.google.inject.name._
+//import com.google.inject._
+//import com.google.inject.name._
 import com.typesafe.config.Config
-import net.codingwell.scalaguice._
+//import net.codingwell.scalaguice._
 //import org.loopring.lightcone.core.accessor._
 //import org.loopring.lightcone.core.actors._
 //import org.loopring.lightcone.core.cache._
 //import org.loopring.lightcone.core.database._
 //import org.loopring.lightcone.core.order._
 //import org.loopring.lightcone.core.block._
-import org.loopring.lightcone.actors.utils._
 //import org.loopring.lightcone.lib.abi._
 //import org.loopring.lightcone.lib.cache._
-import org.loopring.lightcone.lib.time._
+// import org.loopring.lightcone.lib.time._
 //import org.loopring.lightcone.proto.token._
 //import redis._
 
@@ -169,6 +168,7 @@ class CoreModule(config: Config)
     //TODO(xiaolu) confirm with others
     Props(new RingSubmitActor(""))
   }
+
   @Provides
   @Named("cluster_manager")
   def getClusterManagerProps()(implicit
