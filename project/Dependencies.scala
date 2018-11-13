@@ -47,5 +47,9 @@ object Dependencies {
     "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
-    "com.typesafe.akka" %% "akka-http" % akkaHttpVersion)
+    "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+    "org.ethereum" % "ethereumj-core" % "1.8.2-RELEASE",
+    "org.web3j" % "core" % "3.4.0",
+    "org.loopring" %% "lightcone-core" % "0.1.1-SNAPSHOT",
+    "org.loopring" %% "lightcone-biz" % "0.1.1-SNAPSHOT")
 }
