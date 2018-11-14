@@ -21,6 +21,8 @@ import akka.util.Timeout
 import org.loopring.lightcone.proto.actors.RingExecutedRes
 import org.loopring.lightcone.actors.routing.Routers
 import org.loopring.lightcone.core.MarketId
+import org.loopring.lightcone.actors.base
+import org.loopring.lightcone.proto.deployment.RingExecuteStatusSettings
 
 import scala.concurrent.ExecutionContext
 
@@ -28,10 +30,16 @@ import scala.concurrent.ExecutionContext
  *  1、执行状态发送给对应的marketmanager进行pendingpool的清除，
  *  2、记录执行状态并在订单与环路失败到一定次数后，永久删除订单
  *
- *  @param routes
- *  @param ec
- *  @param timeout
  */
+
+object RingExecutedStatusActor
+  extends base.Deployable[RingExecuteStatusSettings] {
+  val name = "ring_execute_status_actor"
+
+  def getCommon(s: RingExecuteStatusSettings) =
+    base.CommonSettings(None, Seq(), 1)
+}
+
 class RingExecutedStatusActor()(
     implicit
     ec: ExecutionContext,

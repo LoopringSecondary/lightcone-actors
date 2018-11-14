@@ -19,12 +19,24 @@ package org.loopring.lightcone.actors.actor
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.actors.base.RepeatedJobActor
 import org.loopring.lightcone.core.GasPriceProvider
 import org.loopring.lightcone.proto.actors.UpdatedGasPrice
+import org.loopring.lightcone.proto.deployment.GasPriceSyncSettings
 
 import scala.concurrent.ExecutionContext
 
+/** 同步gasprice 到gasPriceProvider
+ */
+
+object GasPriceSyncActor
+  extends base.Deployable[GasPriceSyncSettings] {
+  val name = "gasprice_sync_actor"
+
+  def getCommon(s: GasPriceSyncSettings) =
+    base.CommonSettings(None, Seq(), 1)
+}
 class GasPriceSyncActor()(
     implicit
     val gasPriceProvider: GasPriceProvider,

@@ -76,12 +76,12 @@ class NodeManager(
 
       Routers.setRouters(
         MarketManagingActor.name,
-        MarketManagingActor.deploy(injector, settings.orderBookManagerSettingsSeq)
+        MarketManagingActor.deploy(injector, settings.marketManagerSettings)
       )
 
       Routers.setRouters(
         OrderFillHistoryActor.name,
-        OrderFillHistoryActor.deploy(injector, settings.orderFillSettings)
+        OrderFillHistoryActor.deploy(injector, settings.orderFillHistorySettings)
       )
 
       Routers.setRouters(
@@ -93,6 +93,11 @@ class NodeManager(
         RingSubmitActor.name,
         RingSubmitActor.deploy(injector, settings.ringSubmitSettings)
       )
+
+    //      Routers.setRouters(
+    //        RingExecutedStatusActor.name,
+    //        RingExecutedStatusActor.deploy(injector, settings.)
+    //      )
 
   }
 

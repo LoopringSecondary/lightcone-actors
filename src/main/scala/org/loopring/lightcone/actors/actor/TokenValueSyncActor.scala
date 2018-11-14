@@ -19,11 +19,24 @@ package org.loopring.lightcone.actors.actor
 import akka.actor.ActorLogging
 import akka.event.LoggingReceive
 import akka.util.Timeout
+import org.loopring.lightcone.actors.base
 import org.loopring.lightcone.actors.base.{ Job, RepeatedJobActor }
 import org.loopring.lightcone.core.TokenValueEstimatorImpl
 import org.loopring.lightcone.proto.actors.UpdatedTokenBurnRate
+import org.loopring.lightcone.proto.deployment.TokenValueSyncSettings
 
 import scala.concurrent.{ ExecutionContext, Future }
+
+/** 同步tokenvalue到tokenValueEstimator
+ */
+
+object TokenValueSyncActor
+  extends base.Deployable[TokenValueSyncSettings] {
+  val name = "token_value_sync_actor"
+
+  def getCommon(s: TokenValueSyncSettings) =
+    base.CommonSettings(None, Seq(), 1)
+}
 
 class TokenValueSyncActor()(
     implicit

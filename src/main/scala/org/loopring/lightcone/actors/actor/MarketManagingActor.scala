@@ -22,16 +22,16 @@ import akka.util.Timeout
 import org.loopring.lightcone.actors.routing.Routers
 import org.loopring.lightcone.proto.actors.{ OrderStatus ⇒ _, _ }
 import org.loopring.lightcone.core._
-import org.loopring.lightcone.proto.deployment.OrderBookManagerSettings
 import org.loopring.lightcone.actors.base
+import org.loopring.lightcone.proto.deployment.MarketManagerSettings
 
 import scala.concurrent.ExecutionContext
 
 object MarketManagingActor
-  extends base.Deployable[OrderBookManagerSettings] {
+  extends base.Deployable[MarketManagerSettings] {
   val name = "market_managing_actor"
 
-  def getCommon(s: OrderBookManagerSettings) =
+  def getCommon(s: MarketManagerSettings) =
     base.CommonSettings(None, s.roles, 1)
 }
 
