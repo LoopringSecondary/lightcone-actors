@@ -171,10 +171,36 @@ message RingMinerSettings {
     RingEvaluatorSettings evaluator_settings = 6;
 }
 
+message MarketTickerServiceSettings {
+    repeated string roles = 1;
+    int32 instances = 2;
+}
+
+message TokenIcoServiceSettings {
+    repeated string roles = 1;
+    int32 instances = 2;
+}
+
+message TokenInfoServiceSettings {
+    repeated string roles = 1;
+    int32 instances = 2;
+}
+
+message TokenTickerServiceSettings {
+    repeated string roles = 1;
+    int32 instances = 2;
+}
+
+message TokenTrendServiceSettings {
+    repeated string roles = 1;
+    int32 instances = 2;
+}
+
 // todo
 message TokenRegistrySettings {
 
 }
+
 
 message DynamicSettings {
     BalanceCacherSettings balance_cacher_settings = 2;
@@ -194,7 +220,11 @@ message DynamicSettings {
     OrderFillSettings order_fill_settings = 16;
     OrderManagerSettings order_manager_settings = 17;
     RingSubmitterSettings ring_submit_settings = 18;
-
+    MarketTickerServiceSettings  market_ticker_service_settings = 19;
+    TokenIcoServiceSettings  token_ico_service_settings = 20;
+    TokenInfoServiceSettings  token_info_service_setting = 21;
+    TokenTickerServiceSettings  token_ticker_service_setting = 22;
+    TokenTrendServiceSettings   token_trend_service_setting = 23;
 
     repeated OrderBookManagerSettings order_book_manager_settings_seq = 102;
     repeated OrderBookReaderSettings order_book_reader_settings_seq = 103;

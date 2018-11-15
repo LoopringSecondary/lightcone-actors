@@ -26,6 +26,7 @@ object Dependencies {
     "org.json4s" %% "json4s-native" % json4sVersion,
     "org.json4s" %% "json4s-jackson" % json4sVersion,
     "org.json4s" %% "json4s-ext" % json4sVersion,
+    "org.jsoup" % "jsoup" % "1.11.3",
     "com.github.etaty" %% "rediscala" % "1.8.0",
     "com.github.nscala-time" %% "nscala-time" % "2.20.0",
     "mysql" % "mysql-connector-java" % "5.1.22",
